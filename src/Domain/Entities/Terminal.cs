@@ -6,5 +6,5 @@ public class Terminal
     public bool IsActive { get; set; }
 
     // Navigation property
-    public virtual ICollection<OperatorTerminal>? AssignedOperators { get; set; }
+    public virtual ICollection<OperatorTerminal> AssignedOperators { get; set; } = [];
 }

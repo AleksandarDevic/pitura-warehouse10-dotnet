@@ -2,7 +2,7 @@ namespace Domain.Entities;
 
 public class ProductStock
 {
-    public required string LotCode { get; set; }
+    public required string ProductCodeLot { get; set; }
     public required string WhmCode { get; set; }
     public required string Name { get; set; }
     public required string UnitOfMeasure { get; set; }

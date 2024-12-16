@@ -23,7 +23,8 @@ internal sealed class JobInProgressConfiguration : IEntityTypeConfiguration<JobI
         builder.HasOne(d => d.Job)
             .WithMany(p => p.JobsInProgress)
             .HasForeignKey(d => d.JobId)
-            .HasConstraintName("PosloviUToku_PosloviPocetak_FK");
+            .OnDelete(DeleteBehavior.ClientSetNull)
+            .HasConstraintName("PosloviUToku_Posl_FK");
 
         builder.Property(e => e.OperatorTerminalId)
             .HasColumnName("IDPrijaveOperatera");
@@ -32,7 +33,7 @@ internal sealed class JobInProgressConfiguration : IEntityTypeConfiguration<JobI
             .WithMany(p => p.JobsInProgess)
             .HasForeignKey(d => d.OperatorTerminalId)
             .OnDelete(DeleteBehavior.ClientSetNull)
-            .HasConstraintName("PosloviUToku_PrijavaOperatera_FK");
+            .HasConstraintName("PosloviUToku_PrijOper_FK");
 
         builder.Property(e => e.StartDateTime)
             .HasColumnName("VremePreuzimanja")

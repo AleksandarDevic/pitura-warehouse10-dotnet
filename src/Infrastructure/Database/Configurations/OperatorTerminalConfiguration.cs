@@ -23,22 +23,24 @@ internal sealed class OperatorTerminalConfiguration : IEntityTypeConfiguration<O
         builder.Property(e => e.TerminalId)
             .HasColumnName("IDTerminala");
 
-        builder.Property(e => e.LoginTime)
+        builder.Property(e => e.LoginDateTime)
             .HasColumnName("VremePrijave")
             .HasColumnType("datetime");
 
-        builder.Property(e => e.LogoutTime)
+        builder.Property(e => e.LogoutDateTime)
             .HasColumnName("VremeOdjave")
             .HasColumnType("datetime");
 
         builder.HasOne(d => d.Operator)
             .WithMany(p => p.AssignedTerminals)
             .HasForeignKey(d => d.OperatorId)
-            .HasConstraintName("PrijavaOperatera_Operateri_FK_1");
+            .OnDelete(DeleteBehavior.ClientSetNull)
+            .HasConstraintName("PrijavaOper_Oper_FK");
 
         builder.HasOne(d => d.Terminal)
             .WithMany(p => p.AssignedOperators)
             .HasForeignKey(d => d.TerminalId)
-            .HasConstraintName("PrijavaOperatera_Terminali_FK");
+            .OnDelete(DeleteBehavior.ClientSetNull)
+            .HasConstraintName("PrijavaOper_Term_FK");
     }
 }

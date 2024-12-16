@@ -11,10 +11,9 @@ internal sealed class JobItemConfiguration : IEntityTypeConfiguration<JobItem>
         builder.ToTable("StavkePosla");
 
         builder.HasKey(e => e.Id)
-            .HasName("StavkePosla_PK");
+            .HasName("StavkePoslova_PK");
 
         builder.Property(e => e.Id)
-            .ValueGeneratedNever()
             .HasColumnName("ID");
 
         builder.Property(e => e.JobId)
@@ -23,8 +22,7 @@ internal sealed class JobItemConfiguration : IEntityTypeConfiguration<JobItem>
         builder.HasOne(d => d.Job)
             .WithMany(p => p.JobItems)
             .HasForeignKey(d => d.JobId)
-            .OnDelete(DeleteBehavior.ClientSetNull)
-            .HasConstraintName("StavkePosla_PosloviPocetak_FK");
+            .HasConstraintName("StavkePoslova_PP_FK");
 
         builder.Property(e => e.ItemDescription)
             .HasColumnName("OpisStavke")
@@ -34,12 +32,14 @@ internal sealed class JobItemConfiguration : IEntityTypeConfiguration<JobItem>
         builder.Property(e => e.RequiredField1)
             .HasColumnName("ReqPolje1")
             .HasMaxLength(18)
-            .IsUnicode(false);
+            .IsUnicode(false)
+            .HasDefaultValue("");
 
         builder.Property(e => e.RequiredField2)
             .HasColumnName("ReqPolje2")
             .HasMaxLength(36)
-            .IsUnicode(false);
+            .IsUnicode(false)
+            .HasDefaultValue("");
 
         builder.Property(e => e.RequiredField3)
             .HasColumnName("ReqPolje3");
@@ -50,12 +50,13 @@ internal sealed class JobItemConfiguration : IEntityTypeConfiguration<JobItem>
         builder.HasOne(d => d.JobInProgress)
             .WithMany(p => p.JobItems)
             .HasForeignKey(d => d.JobInProgressId)
-            .HasConstraintName("StavkePosla_PosloviUToku_FK");
+            .HasConstraintName("StavkePoslova_PUT_FK");
 
         builder.Property(e => e.ReadedField3)
             .HasColumnName("ReadedPolje3");
 
         builder.Property(e => e.ItemStatus)
-            .HasColumnName("StatusStavke");
+            .HasColumnName("StatusStavke")
+            .HasDefaultValue((byte)0);
     }
 }

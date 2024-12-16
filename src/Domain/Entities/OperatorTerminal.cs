@@ -9,9 +9,9 @@ public class OperatorTerminal
     public int TerminalId { get; set; }
     public virtual Terminal Terminal { get; set; } = null!;
 
-    public DateTime LoginTime { get; set; }
-    public DateTime? LogoutTime { get; set; }
+    public DateTime LoginDateTime { get; set; }
+    public DateTime? LogoutDateTime { get; set; }
 
     // Navigation property
-    public virtual ICollection<JobInProgress>? JobsInProgess { get; set; }
+    public virtual ICollection<JobInProgress> JobsInProgess { get; set; } = [];
 }

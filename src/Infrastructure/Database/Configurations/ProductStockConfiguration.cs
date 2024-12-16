@@ -10,27 +10,28 @@ internal sealed class ProductStockConfiguration : IEntityTypeConfiguration<Produ
     {
         builder.ToTable("StanjeArtikala");
 
-        builder.HasKey(e => e.LotCode)
+        builder.HasKey(e => new { e.ProductCodeLot, e.WhmCode })
             .HasName("StanjeArtikala_PK");
 
-        builder.Property(e => e.LotCode)
-            .HasMaxLength(21)
+        builder.Property(e => e.ProductCodeLot)
+            .HasMaxLength(36)
             .IsUnicode(false)
             .HasColumnName("SifraLOT");
 
         builder.Property(e => e.WhmCode)
             .HasColumnName("WhmOznaka")
-            .HasMaxLength(100)
-            .IsUnicode(false);
+             .HasMaxLength(18)
+            .IsUnicode(false)
+            .HasDefaultValue("");
 
         builder.Property(e => e.Name)
             .HasColumnName("Naziv")
-            .HasMaxLength(150)
+            .HasMaxLength(96)
             .IsUnicode(false);
 
         builder.Property(e => e.UnitOfMeasure)
             .HasColumnName("JedinicaMere")
-            .HasMaxLength(100)
+            .HasMaxLength(4)
             .IsUnicode(false);
 
         builder.Property(e => e.Weight)
@@ -44,21 +45,19 @@ internal sealed class ProductStockConfiguration : IEntityTypeConfiguration<Produ
             .HasColumnType("datetime");
 
         builder.Property(e => e.Quantity)
-            .HasColumnName("Stanje")
-            .HasColumnType("decimal(38, 0)");
+            .HasColumnName("Stanje");
 
         builder.Property(e => e.Price)
-            .HasColumnName("Cena")
-            .HasColumnType("decimal(38, 0)");
+            .HasColumnName("Cena");
 
         builder.Property(e => e.Barcode)
             .HasColumnName("Barkod")
-            .HasMaxLength(100)
+            .HasMaxLength(52)
             .IsUnicode(false);
 
         builder.Property(e => e.MPBarcode)
             .HasColumnName("MPBarkod")
-            .HasMaxLength(100)
+            .HasMaxLength(13)
             .IsUnicode(false);
 
         builder.Property(e => e.ImagePath)
@@ -69,7 +68,7 @@ internal sealed class ProductStockConfiguration : IEntityTypeConfiguration<Produ
 
         builder.Property(e => e.Comment)
             .HasColumnName("Komentar")
-            .HasMaxLength(100)
+            .HasMaxLength(160)
             .IsUnicode(false);
 
         builder.Property(e => e.Image)

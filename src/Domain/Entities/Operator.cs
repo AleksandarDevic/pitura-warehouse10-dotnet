@@ -7,6 +7,6 @@ public class Operator
     public bool IsActive { get; set; }
 
     // Navigation property
-    public virtual ICollection<OperatorTerminal>? AssignedTerminals { get; set; }
-    public virtual ICollection<Job>? Jobs { get; set; }
+    public virtual ICollection<OperatorTerminal> AssignedTerminals { get; set; } = [];
+    public virtual ICollection<Job> Jobs { get; set; } = [];
 }

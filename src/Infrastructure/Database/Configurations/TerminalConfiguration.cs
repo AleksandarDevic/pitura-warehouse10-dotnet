@@ -14,15 +14,18 @@ internal sealed class TerminalConfiguration : IEntityTypeConfiguration<Terminal>
             .HasName("Terminali_PK");
 
         builder.Property(e => e.Id)
-            .HasColumnName("ID")
-            .ValueGeneratedNever();
+            .HasColumnName("ID");
 
         builder.Property(e => e.Name)
             .HasColumnName("Naziv")
             .HasMaxLength(15)
             .IsUnicode(false);
 
+        builder.HasIndex(e => e.Name, "UQ__Terminal__603E8146582D883C")
+            .IsUnique();
+
         builder.Property(e => e.IsActive)
-           .HasColumnName("Aktivan");
+           .HasColumnName("Aktivan")
+           .HasDefaultValue(true);
     }
 }

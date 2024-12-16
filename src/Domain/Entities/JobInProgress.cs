@@ -16,5 +16,5 @@ public class JobInProgress
     public string? Note { get; set; }
 
     // Navigation properties
-    public virtual ICollection<JobItem> JobItems { get; set; } = null!;
+    public virtual ICollection<JobItem> JobItems { get; set; } = [];
 }

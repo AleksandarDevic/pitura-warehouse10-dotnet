@@ -26,5 +26,13 @@ internal sealed class OperatorConfiguration : IEntityTypeConfiguration<Operator>
             .HasColumnName("Lozinka")
             .HasMaxLength(10)
             .IsUnicode(false);
+
+        builder.HasIndex(e => e.Password, "UQ__Operater__474C2E8E013048A9")
+            .IsUnique();
+
+        builder.Property(x => x.IsActive)
+            .HasColumnName("Aktivan")
+            .HasDefaultValue(true);
+
     }
 }

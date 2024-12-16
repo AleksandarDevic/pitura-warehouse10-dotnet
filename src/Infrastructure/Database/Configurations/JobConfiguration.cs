@@ -28,11 +28,11 @@ internal sealed class JobConfiguration : IEntityTypeConfiguration<Job>
         builder.HasOne(d => d.AssignedOperator)
             .WithMany(p => p.Jobs)
             .HasForeignKey(d => d.AssignedOperatorId)
-            .OnDelete(DeleteBehavior.SetNull)
-            .HasConstraintName("PosloviPocetak_Operateri_FK");
+            .HasConstraintName("PosloviPocetak_Oper_FK");
 
         builder.Property(e => e.Type)
-            .HasColumnName("Tip");
+            .HasColumnName("Tip")
+            .HasDefaultValue((byte)1);
 
         builder.Property(e => e.CreationDateTime)
             .HasColumnName("VremeKreiranja")
@@ -56,28 +56,35 @@ internal sealed class JobConfiguration : IEntityTypeConfiguration<Job>
             .HasColumnName("VrstaZavrsetka");
 
         builder.Property(e => e.LastNote)
-            .HasColumnName("PoslednjaNapomena");
+            .HasColumnName("PoslednjaNapomena")
+            .HasMaxLength(240)
+            .IsUnicode(false);
 
         builder.Property(e => e.Field1Length)
             .HasColumnName("Polje1Duzina");
 
         builder.Property(e => e.IsField1Required)
-            .HasColumnName("Polje1Obavezno");
+            .HasColumnName("Polje1Obavezno")
+            .HasDefaultValue(true);
 
         builder.Property(e => e.Field2Length)
             .HasColumnName("Polje2Duzina");
 
         builder.Property(e => e.IsField2Required)
-            .HasColumnName("Polje2Obavezno");
+            .HasColumnName("Polje2Obavezno")
+            .HasDefaultValue(true);
 
         builder.Property(e => e.IsField3Required)
-            .HasColumnName("Polje3Obavezno");
+            .HasColumnName("Polje3Obavezno")
+            .HasDefaultValue(true);
 
         builder.Property(e => e.ReadingType)
-            .HasColumnName("VrstaOcitavanja");
+            .HasColumnName("VrstaOcitavanja")
+            .HasDefaultValue((byte)1);
 
         builder.Property(e => e.ClosingType)
-            .HasColumnName("VrstaZatvaranja");
+            .HasColumnName("VrstaZatvaranja")
+            .HasDefaultValue((byte)1);
 
         builder.Property(e => e.LidderDocumentNumber)
             .HasColumnName("LidderBrojDok");

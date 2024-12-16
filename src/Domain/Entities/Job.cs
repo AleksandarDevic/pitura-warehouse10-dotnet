@@ -47,7 +47,7 @@ public class Job
     public string? Client { get; set; }
 
     // Navigation properties
-    public virtual ICollection<JobInProgress> JobsInProgress { get; set; } = null!;
+    public virtual ICollection<JobInProgress> JobsInProgress { get; set; } = [];
 
-    public virtual ICollection<JobItem> JobItems { get; set; } = null!;
+    public virtual ICollection<JobItem> JobItems { get; set; } = [];
 }
