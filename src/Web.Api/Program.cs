@@ -37,7 +37,6 @@ app.MapEndpoints(versionedGroup);
 if (app.Environment.IsDevelopment())
 {
     app.UseSwaggerWithUi();
-
 }
 
 app.UseHttpsRedirection();
@@ -47,6 +46,9 @@ app.UseRequestContextLogging();
 app.UseSerilogRequestLogging();
 
 app.UseExceptionHandler();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.Run();
 

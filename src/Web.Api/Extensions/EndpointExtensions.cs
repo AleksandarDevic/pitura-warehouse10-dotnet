@@ -1,6 +1,4 @@
-using System.Net;
 using System.Reflection;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Web.Api.Endpoints;
 
@@ -12,8 +10,8 @@ public static class EndpointExtensions
         ServiceDescriptor[] serviceDescriptors = assembly
             .DefinedTypes
             .Where(type => type is { IsAbstract: false, IsInterface: false } &&
-                        type.IsAssignableTo(typeof(EndPoint)))
-            .Select(type => ServiceDescriptor.Transient(typeof(Endpoint), type))
+                        type.IsAssignableTo(typeof(IEndpoint)))
+            .Select(type => ServiceDescriptor.Transient(typeof(IEndpoint), type))
             .ToArray();
 
         services.TryAddEnumerable(serviceDescriptors);

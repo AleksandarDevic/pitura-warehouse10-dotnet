@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Database;
 public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-    : DbContext(options), IUnitOfWork
+    : DbContext(options), IApplicationDbContext
 {
     public DbSet<Terminal> Terminals { get; set; } = null!;
     public DbSet<Operator> Operators { get; set; } = null!;
