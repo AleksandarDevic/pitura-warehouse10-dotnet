@@ -24,8 +24,11 @@ internal sealed class LoginCommandHandler(IApplicationDbContext dbContext, IJwtP
 
         var result = jwtProvider.Create(operater.Id, terminal.Id);
 
+        int currentMaxId = await dbContext.OperatorTerminalSessions.MaxAsync(x => x.Id, cancellationToken);
+
         OperatorTerminal newOperatorTerminal = new()
         {
+            Id = currentMaxId + 1,
             Operator = operater,
             Terminal = terminal,
             LoginDateTime = dateTimeProvider.UtcNow
