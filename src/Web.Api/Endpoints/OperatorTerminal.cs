@@ -61,8 +61,7 @@ public class OperatorTerminal : IEndpoint
 
             return result.Match(Results.NoContent, CustomResults.Problem);
         })
-        .WithTags("TerminalOperator")
-        .RequireAuthorization();
+        .WithTags("TerminalOperator");
     }
 
 }

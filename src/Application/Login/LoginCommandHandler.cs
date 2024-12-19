@@ -16,11 +16,15 @@ internal sealed class LoginCommandHandler(IApplicationDbContext dbContext, IJwtP
         if (terminal is null)
             return Result.Failure<JwtResponse>(OperatorTerminalErrors.TerminalNotFound);
 
-        var operater = await dbContext.Operators.FirstOrDefaultAsync(x => x.Id == request.OperatorId && x.IsActive, cancellationToken);
-        if (operater is null)
-            return Result.Failure<JwtResponse>(OperatorTerminalErrors.OperatorNotFound);
+        // var operater = await dbContext.Operators.FirstOrDefaultAsync(x => x.Id == request.OperatorId && x.IsActive, cancellationToken);
+        // if (operater is null)
+        //     return Result.Failure<JwtResponse>(OperatorTerminalErrors.OperatorNotFound);
 
-        if (operater.Password != request.OperatorPassword)
+        // if (operater.Password != request.OperatorPassword)
+        //     return Result.Failure<JwtResponse>(OperatorTerminalErrors.BadCredentials);
+
+        var operater = await dbContext.Operators.FirstOrDefaultAsync(x => x.Password == request.OperatorPassword && x.IsActive, cancellationToken);
+        if (operater is null)
             return Result.Failure<JwtResponse>(OperatorTerminalErrors.BadCredentials);
 
         int currentMaxId = await dbContext.OperatorTerminalSessions.MaxAsync(x => x.Id, cancellationToken);
