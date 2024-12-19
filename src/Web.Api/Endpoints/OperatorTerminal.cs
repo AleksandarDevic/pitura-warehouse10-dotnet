@@ -16,8 +16,6 @@ public class OperatorTerminal : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
 
-        app.MapGet("/", () => "Hello World!"); // => is showing
-
         app.MapPost("terminal-operator/login", async (
             [FromBody] LoginCommand command,
             HttpContext httpContext,
@@ -40,7 +38,7 @@ public class OperatorTerminal : IEndpoint
 
             return result.Match(Results.Ok, CustomResults.Problem);
         })
-        .WithTags("TerminalOperator");
+        .WithTags(Tags.TerminalOperator);
 
         app.MapPost("terminal-operator/logout", async (
             HttpContext httpContext,
@@ -61,7 +59,7 @@ public class OperatorTerminal : IEndpoint
 
             return result.Match(Results.NoContent, CustomResults.Problem);
         })
-        .WithTags("TerminalOperator");
+        .WithTags(Tags.TerminalOperator);
     }
 
 }

@@ -5,6 +5,8 @@ using Web.Api.Extensions;
 using System.Reflection;
 using Asp.Versioning.Builder;
 using Asp.Versioning;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using HealthChecks.UI.Client;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,6 +43,11 @@ if (!app.Environment.IsProduction())
 
 app.UseHttpsRedirection();
 
+app.MapHealthChecks("health", new HealthCheckOptions
+{
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+});
+
 app.UseRequestContextLogging();
 
 app.UseSerilogRequestLogging();
@@ -50,6 +57,6 @@ app.UseExceptionHandler();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.Run();
+await app.RunAsync();
 
 public partial class Program;

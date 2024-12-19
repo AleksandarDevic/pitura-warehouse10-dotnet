@@ -22,7 +22,8 @@ public static class DependencyInjection
        services
            .AddServices()
            .AddDatabase(configuration)
-           .AddAuth(configuration);
+           .AddAuth(configuration)
+           .AddHealthChecks(configuration);
 
     private static IServiceCollection AddServices(this IServiceCollection services)
     {
@@ -69,6 +70,17 @@ public static class DependencyInjection
                 ClockSkew = TimeSpan.Zero,
             };
         });
+
+        return services;
+    }
+
+    private static IServiceCollection AddHealthChecks(this IServiceCollection services, IConfiguration configuration)
+    {
+        string? connectionString = configuration.GetConnectionString("Database");
+        Ensure.NotNullOrEmpty(connectionString);
+        services
+            .AddHealthChecks()
+            .AddSqlServer(connectionString);
 
         return services;
     }
