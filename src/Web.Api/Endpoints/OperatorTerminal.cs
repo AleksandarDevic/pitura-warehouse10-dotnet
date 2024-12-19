@@ -1,5 +1,6 @@
 using Application.Login;
 using Application.Logout;
+using Application.TokenRefresh;
 using Domain.Entities;
 using Domain.Models;
 using MediatR;
@@ -22,18 +23,12 @@ public class OperatorTerminal : IEndpoint
             ISender sender,
             CancellationToken cancellationToken) =>
         {
-            Result<JwtResponse> result = await sender.Send(command, cancellationToken);
+            var result = await sender.Send(command, cancellationToken);
 
             if (result.IsSuccess)
             {
                 var refreshToken = result.Value.RefreshToken;
-                httpContext.Response.Cookies.Append(HttpContextItemKeys.RefreshTokenCookie, refreshToken.Value, new CookieOptions
-                {
-                    HttpOnly = true,
-                    Expires = refreshToken.Expires,
-                    SameSite = SameSiteMode.None,
-                    Secure = true
-                });
+                SetRefreshTokenCookie(httpContext, refreshToken);
             }
 
             return result.Match(Results.Ok, CustomResults.Problem);
@@ -55,11 +50,49 @@ public class OperatorTerminal : IEndpoint
             Result result = await sender.Send(command, cancellationToken);
 
             if (result.IsSuccess)
-                httpContext.Response.Cookies.Delete(HttpContextItemKeys.RefreshTokenCookie);
+                DeleteRefreshTokenCookie(httpContext);
+
+            return result.Match(Results.NoContent, CustomResults.Problem);
+        })
+        .WithTags(Tags.TerminalOperator);
+
+        app.MapPost("terminal-operator/token-refresh", async (
+            HttpContext httpContext,
+            ISender sender,
+            CancellationToken cancellationToken) =>
+        {
+            var refreshToken = httpContext.Request.Cookies[HttpContextItemKeys.RefreshTokenCookie];
+            if (refreshToken is null)
+                return Results.Unauthorized();
+
+            int operatorTerminalId = int.Parse(refreshToken);
+
+            var command = new TokenRefreshCommand(operatorTerminalId);
+            var result = await sender.Send(command, cancellationToken);
+
+            if (result.IsSuccess)
+                DeleteRefreshTokenCookie(httpContext);
+
+            SetRefreshTokenCookie(httpContext, result.Value.RefreshToken);
 
             return result.Match(Results.NoContent, CustomResults.Problem);
         })
         .WithTags(Tags.TerminalOperator);
     }
 
+    private static void DeleteRefreshTokenCookie(HttpContext httpContext)
+    {
+        httpContext.Response.Cookies.Delete(HttpContextItemKeys.RefreshTokenCookie);
+    }
+
+    private static void SetRefreshTokenCookie(HttpContext httpContext, RefreshToken refreshToken)
+    {
+        httpContext.Response.Cookies.Append(HttpContextItemKeys.RefreshTokenCookie, refreshToken.Value, new CookieOptions
+        {
+            HttpOnly = true,
+            Expires = refreshToken.Expires,
+            SameSite = SameSiteMode.None,
+            Secure = true
+        });
+    }
 }
