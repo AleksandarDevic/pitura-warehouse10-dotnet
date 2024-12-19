@@ -14,9 +14,9 @@ builder.Host.UseSerilog((context, loggerConfig) =>
 );
 
 builder.Services
+    .AddInfrastructure(builder.Configuration)
     .AddApplication()
-    .AddPresentation()
-    .AddInfrastructure(builder.Configuration);
+    .AddPresentation();
 
 builder.Services.AddEndpoints(Assembly.GetExecutingAssembly());
 

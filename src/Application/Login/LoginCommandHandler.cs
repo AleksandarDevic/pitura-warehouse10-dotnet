@@ -2,6 +2,7 @@ using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
 using Application.Abstractions.Messaging;
 using Domain.Entities;
+using Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel;
 
@@ -22,8 +23,6 @@ internal sealed class LoginCommandHandler(IApplicationDbContext dbContext, IJwtP
         if (operater.Password != request.OperatorPassword)
             return Result.Failure<JwtResponse>(OperatorTerminalErrors.BadCredentials);
 
-        var result = jwtProvider.Create(operater.Id, terminal.Id);
-
         int currentMaxId = await dbContext.OperatorTerminalSessions.MaxAsync(x => x.Id, cancellationToken);
 
         OperatorTerminal newOperatorTerminal = new()
@@ -37,6 +36,8 @@ internal sealed class LoginCommandHandler(IApplicationDbContext dbContext, IJwtP
         await dbContext.OperatorTerminalSessions.AddAsync(newOperatorTerminal, cancellationToken);
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        var result = jwtProvider.Create(newOperatorTerminal);
 
         return result;
     }

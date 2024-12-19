@@ -2,6 +2,8 @@ using System.Security.Claims;
 using System.Text;
 using Application.Abstractions.Authentication;
 using Application.Login;
+using Domain.Entities;
+using Domain.Models;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
@@ -13,7 +15,7 @@ public class JwtProvider(IDateTimeProvider dateTimeProvider, IOptions<JwtOptions
 {
     public readonly JwtOptions _options = options.Value;
 
-    public JwtResponse Create(int operatorId, int terminalId)
+    public JwtResponse Create(OperatorTerminal operatorTerminal)
     {
         var secretKey = _options.Secret;
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
@@ -25,9 +27,9 @@ public class JwtProvider(IDateTimeProvider dateTimeProvider, IOptions<JwtOptions
         {
             Subject = new ClaimsIdentity(
             [
-               new Claim(JwtRegisteredClaimNames.Sub,$"{claimTypeTerminal}: {terminalId} - {claimTypeOperator}: {operatorId}"),
-               new Claim(claimTypeTerminal,$"{terminalId}"),
-               new Claim(claimTypeOperator,$"{operatorId}"),
+               new Claim(JwtRegisteredClaimNames.Sub, $"{operatorTerminal.Id}"),
+               new Claim(claimTypeTerminal,$"{operatorTerminal.TerminalId}"),
+               new Claim(claimTypeOperator,$"{operatorTerminal.OperatorId}"),
             ]),
             Expires = dateTimeProvider.UtcNow.AddMinutes(_options.AccessTokenExpirationInMinutes),
             SigningCredentials = credentials,
@@ -41,8 +43,16 @@ public class JwtProvider(IDateTimeProvider dateTimeProvider, IOptions<JwtOptions
 
         var result = new JwtResponse
         {
-            AccessToken = token,
-            Expires = (DateTime)tokenDescriptor.Expires
+            AccessToken = new AccessToken
+            {
+                Value = token,
+                Expires = (DateTime)tokenDescriptor.Expires
+            },
+            RefreshToken = new RefreshToken
+            {
+                Value = operatorTerminal.Id.ToString(),
+                Expires = DateTime.UtcNow.AddDays(_options.RefreshTokenExpirationInDays)
+            }
         };
 
         return result;

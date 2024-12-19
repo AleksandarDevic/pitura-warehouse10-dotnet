@@ -1,8 +1,9 @@
-using Application.Login;
+using Domain.Entities;
+using Domain.Models;
 
 namespace Application.Abstractions.Authentication;
 
 public interface IJwtProvider
 {
-    JwtResponse Create(int operatorId, int terminalId);
+    JwtResponse Create(OperatorTerminal operatorTerminal);
 }
