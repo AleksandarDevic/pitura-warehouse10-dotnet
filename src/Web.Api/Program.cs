@@ -34,7 +34,7 @@ RouteGroupBuilder versionedGroup = app
 app.MapEndpoints(versionedGroup);
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (!app.Environment.IsProduction())
 {
     app.UseSwaggerWithUi();
 }
