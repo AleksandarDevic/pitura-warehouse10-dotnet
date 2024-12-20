@@ -1,6 +1,9 @@
+using Application.JobItems.GetJobItems;
 using Application.Jobs.GetAssignedJob;
 using Application.Jobs.GetAvailableJobs;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
+using SharedKernel;
 using Web.Api.Extensions;
 using Web.Api.Infrastructure;
 
@@ -28,6 +31,28 @@ public class Job : IEndpoint
             CancellationToken cancellationToken) =>
         {
             var query = new GetAssignedJobQuery();
+            var result = await sender.Send(query, cancellationToken);
+
+            return result.Match(Results.Ok, CustomResults.Problem);
+        })
+        .WithTags(Tags.Job)
+        .RequireAuthorization();
+
+        app.MapGet("job/{jobId}/items", async (
+            ISender sender,
+            [FromRoute] long jobId,
+            [AsParameters] BasePagedRequest request,
+            CancellationToken cancellationToken) =>
+        {
+            var query = new GetJobItemsQuery
+            {
+                JobId = jobId,
+                SearchTerm = request.SearchTerm,
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize,
+                OrderBy = request.OrderBy,
+                IsDescending = request.IsDescending
+            };
             var result = await sender.Send(query, cancellationToken);
 
             return result.Match(Results.Ok, CustomResults.Problem);

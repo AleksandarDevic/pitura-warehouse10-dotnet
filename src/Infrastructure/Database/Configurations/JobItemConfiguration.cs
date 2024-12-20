@@ -8,7 +8,7 @@ internal sealed class JobItemConfiguration : IEntityTypeConfiguration<JobItem>
 {
     public void Configure(EntityTypeBuilder<JobItem> builder)
     {
-        builder.ToTable("StavkePosla");
+        builder.ToTable("StavkePoslova");
 
         builder.HasKey(e => e.Id)
             .HasName("StavkePoslova_PK");
