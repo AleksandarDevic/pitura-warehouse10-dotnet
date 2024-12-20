@@ -12,10 +12,9 @@ public class Job : IEndpoint
 
         app.MapGet("job/available", async (
             ISender sender,
-            // [AsParameters] GetAvailableJobsQuery query,
+            [AsParameters] GetAvailableJobsQuery query,
             CancellationToken cancellationToken) =>
         {
-            var query = new GetAvailableJobsQuery();
             var result = await sender.Send(query, cancellationToken);
 
             return result.Match(Results.Ok, CustomResults.Problem);
