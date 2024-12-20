@@ -3,6 +3,7 @@ using Application.Abstractions.Data;
 using Application.Abstractions.Messaging;
 using Application.Extensions;
 using Domain.Entities;
+using Domain.Enums;
 using Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel;
@@ -40,8 +41,14 @@ internal sealed class GetAvailableJobsQueryHandler(IApplicationDbContext dbConte
             Id = x.Id,
             Description = x.Description,
             AssignedOperatorId = x.AssignedOperatorId,
+            Type = (JobType)x.Type,
             CreationDateTime = x.CreationDateTime,
             DueDateTime = x.DueDateTime,
+            CompletionType = (JobCompletitionType)x.CompletionType,
+            LastNote = x.LastNote,
+            InventoryId = x.InventoryId,
+            IsVerified = x.IsVerified,
+            Client = x.Client
         });
 
         var result = await jobResponsesQuery.ToPagedListAsync(request.PageNumber, request.PageSize, cancellationToken);

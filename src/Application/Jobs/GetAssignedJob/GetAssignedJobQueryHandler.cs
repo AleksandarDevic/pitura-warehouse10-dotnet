@@ -2,6 +2,7 @@ using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
 using Application.Abstractions.Messaging;
 using Domain.Entities;
+using Domain.Enums;
 using Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel;
@@ -24,8 +25,14 @@ internal sealed class GetAssignedJobQueryHandler(ICurrentUserService currentUser
             Id = x.Id,
             Description = x.Description,
             AssignedOperatorId = x.AssignedOperatorId,
+            Type = (JobType)x.Type,
             CreationDateTime = x.CreationDateTime,
             DueDateTime = x.DueDateTime,
+            CompletionType = (JobCompletitionType)x.CompletionType,
+            LastNote = x.LastNote,
+            InventoryId = x.InventoryId,
+            IsVerified = x.IsVerified,
+            Client = x.Client
         });
 
         var result = await jobResponsesQuery.FirstOrDefaultAsync(cancellationToken);
