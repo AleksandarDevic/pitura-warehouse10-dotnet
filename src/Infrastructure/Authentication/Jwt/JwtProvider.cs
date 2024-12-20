@@ -28,8 +28,8 @@ public class JwtProvider(IDateTimeProvider dateTimeProvider, IOptions<JwtOptions
             Subject = new ClaimsIdentity(
             [
                new Claim(JwtRegisteredClaimNames.Sub, $"{operatorTerminal.Id}"),
-               new Claim(claimTypeTerminal,$"{operatorTerminal.TerminalId}"),
-               new Claim(claimTypeOperator,$"{operatorTerminal.OperatorId}"),
+               new Claim(claimTypeTerminal, $"{operatorTerminal.TerminalId}"),
+               new Claim(claimTypeOperator, $"{operatorTerminal.OperatorId}"),
             ]),
             Expires = dateTimeProvider.UtcNow.AddMinutes(_options.AccessTokenExpirationInMinutes),
             SigningCredentials = credentials,

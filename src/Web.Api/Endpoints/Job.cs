@@ -1,3 +1,4 @@
+using Application.Jobs.GetAssignedJob;
 using Application.Jobs.GetAvailableJobs;
 using MediatR;
 using Web.Api.Extensions;
@@ -15,6 +16,18 @@ public class Job : IEndpoint
             [AsParameters] GetAvailableJobsQuery query,
             CancellationToken cancellationToken) =>
         {
+            var result = await sender.Send(query, cancellationToken);
+
+            return result.Match(Results.Ok, CustomResults.Problem);
+        })
+        .WithTags(Tags.Job)
+        .RequireAuthorization();
+
+        app.MapGet("job/assigned", async (
+            ISender sender,
+            CancellationToken cancellationToken) =>
+        {
+            var query = new GetAssignedJobQuery();
             var result = await sender.Send(query, cancellationToken);
 
             return result.Match(Results.Ok, CustomResults.Problem);

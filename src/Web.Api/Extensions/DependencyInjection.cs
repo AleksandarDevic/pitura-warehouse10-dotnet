@@ -1,6 +1,8 @@
+using Application.Abstractions.Authentication;
 using Asp.Versioning;
 using Web.Api.Infrastructure;
 using Web.Api.OpenApi;
+using Web.Api.Services;
 
 namespace Web.Api.Extensions;
 public static class DependencyInjection
@@ -24,6 +26,9 @@ public static class DependencyInjection
         });
 
         services.ConfigureOptions<ConfigureSwaggerGenOptions>();
+
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
 
         return services;
     }
