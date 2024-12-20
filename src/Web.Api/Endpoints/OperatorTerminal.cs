@@ -1,5 +1,6 @@
 using Application.Login;
 using Application.Logout;
+using Application.OperatorTerminals.GetOperatorTerminalDetails;
 using Application.TokenRefresh;
 using Domain.Entities;
 using Domain.Models;
@@ -17,7 +18,7 @@ public class OperatorTerminal : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
 
-        app.MapPost("terminal-operator/login", async (
+        app.MapPost("operator-terminal/login", async (
             [FromBody] LoginCommand command,
             HttpContext httpContext,
             ISender sender,
@@ -33,9 +34,9 @@ public class OperatorTerminal : IEndpoint
 
             return result.Match(Results.Ok, CustomResults.Problem);
         })
-        .WithTags(Tags.TerminalOperator);
+        .WithTags(Tags.OperatorTerminal);
 
-        app.MapPost("terminal-operator/logout", async (
+        app.MapPost("operator-terminal/logout", async (
             HttpContext httpContext,
             ISender sender,
             CancellationToken cancellationToken) =>
@@ -54,9 +55,9 @@ public class OperatorTerminal : IEndpoint
 
             return result.Match(Results.NoContent, CustomResults.Problem);
         })
-        .WithTags(Tags.TerminalOperator);
+        .WithTags(Tags.OperatorTerminal);
 
-        app.MapPost("terminal-operator/token-refresh", async (
+        app.MapPost("operator-terminal/token-refresh", async (
             HttpContext httpContext,
             ISender sender,
             CancellationToken cancellationToken) =>
@@ -77,7 +78,19 @@ public class OperatorTerminal : IEndpoint
 
             return result.Match(Results.Ok, CustomResults.Problem);
         })
-        .WithTags(Tags.TerminalOperator);
+        .WithTags(Tags.OperatorTerminal);
+
+        app.MapGet("operator-terminal/details", async (
+            ISender sender,
+            CancellationToken cancellationToken) =>
+        {
+            var query = new GetOperatorTerminalDetailsQuery();
+            var result = await sender.Send(query, cancellationToken);
+
+            return result.Match(Results.Ok, CustomResults.Problem);
+        })
+        .WithTags(Tags.OperatorTerminal)
+        .RequireAuthorization();
     }
 
     private static void DeleteRefreshTokenCookie(HttpContext httpContext)
