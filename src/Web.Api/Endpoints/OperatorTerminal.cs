@@ -3,8 +3,6 @@ using Application.Logout;
 using Application.OperatorTerminals.GetActiveTerminals;
 using Application.OperatorTerminals.GetOperatorTerminalDetails;
 using Application.TokenRefresh;
-using Domain.Entities;
-using Domain.Models;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SharedKernel;
@@ -103,19 +101,19 @@ public class OperatorTerminal : IEndpoint
         .RequireAuthorization();
     }
 
-    private static void DeleteRefreshTokenCookie(HttpContext httpContext)
+    private static void SetRefreshTokenCookie(HttpContext httpContext, string refreshToken)
     {
-        httpContext.Response.Cookies.Delete(HttpContextItemKeys.RefreshTokenCookie);
-    }
-
-    private static void SetRefreshTokenCookie(HttpContext httpContext, RefreshToken refreshToken)
-    {
-        httpContext.Response.Cookies.Append(HttpContextItemKeys.RefreshTokenCookie, refreshToken.Value, new CookieOptions
+        httpContext.Response.Cookies.Append(HttpContextItemKeys.RefreshTokenCookie, refreshToken, new CookieOptions
         {
             HttpOnly = true,
-            Expires = refreshToken.Expires,
+            Expires = DateTime.UtcNow.AddDays(1),
             SameSite = SameSiteMode.None,
             Secure = true
         });
+    }
+
+    private static void DeleteRefreshTokenCookie(HttpContext httpContext)
+    {
+        httpContext.Response.Cookies.Delete(HttpContextItemKeys.RefreshTokenCookie);
     }
 }

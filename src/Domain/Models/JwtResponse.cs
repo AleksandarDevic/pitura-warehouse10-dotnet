@@ -2,6 +2,6 @@ namespace Domain.Models;
 
 public record JwtResponse
 {
-    public AccessToken AccessToken { get; init; } = null!;
-    public RefreshToken RefreshToken { get; init; } = null!;
+    public string AccessToken { get; init; } = null!;
+    public string RefreshToken { get; init; } = null!;
 }
