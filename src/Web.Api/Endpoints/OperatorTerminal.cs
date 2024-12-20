@@ -1,5 +1,6 @@
 using Application.Login;
 using Application.Logout;
+using Application.OperatorTerminals.GetActiveTerminals;
 using Application.OperatorTerminals.GetOperatorTerminalDetails;
 using Application.TokenRefresh;
 using Domain.Entities;
@@ -17,6 +18,15 @@ public class OperatorTerminal : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
+        app.MapGet("terminal/all", async (
+            ISender sender,
+            CancellationToken cancellationToken) =>
+        {
+            var result = await sender.Send(new GetActiveTerminalsQuery(), cancellationToken);
+
+            return result.Match(Results.Ok, CustomResults.Problem);
+        })
+        .WithTags(Tags.Terminal);
 
         app.MapPost("operator-terminal/login", async (
             [FromBody] LoginCommand command,
