@@ -3,6 +3,7 @@ using System.Text;
 using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
 using Infrastructure.Authentication.Jwt;
+using Infrastructure.BackgroundJobs.Logout;
 using Infrastructure.Database;
 using Infrastructure.Time;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -11,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Quartz;
 using SharedKernel;
 
 namespace Infrastructure;
@@ -23,7 +25,8 @@ public static class DependencyInjection
            .AddServices()
            .AddDatabase(configuration)
            .AddAuth(configuration)
-           .AddHealthChecks(configuration);
+           .AddHealthChecks(configuration)
+           .AddBackgroundJobs();
 
     private static IServiceCollection AddServices(this IServiceCollection services)
     {
@@ -81,6 +84,17 @@ public static class DependencyInjection
         services
             .AddHealthChecks()
             .AddSqlServer(connectionString);
+
+        return services;
+    }
+
+    private static IServiceCollection AddBackgroundJobs(this IServiceCollection services)
+    {
+        services.AddQuartz();
+
+        services.AddQuartzHostedService(options => options.WaitForJobsToComplete = true);
+
+        services.ConfigureOptions<OperatorTerminalLogoutJobSetup>();
 
         return services;
     }

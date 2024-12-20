@@ -16,6 +16,9 @@ internal sealed class TokenRefreshCommandHandler(IApplicationDbContext dbContext
         if (operatorTerminal is null)
             return Result.Failure<JwtResponse>(OperatorTerminalErrors.NotFound);
 
+        if (operatorTerminal.LogoutDateTime != null)
+            return Result.Failure<JwtResponse>(OperatorTerminalErrors.Unauthorized);
+
         var result = jwtProvider.Create(operatorTerminal);
 
         return result;

@@ -14,6 +14,9 @@ internal sealed class LogoutCommandHandler(IApplicationDbContext dbContext, IDat
         if (operatorTerminal is null)
             return Result.Failure<Result>(OperatorTerminalErrors.NotFound);
 
+        if (operatorTerminal.LogoutDateTime is not null)
+            return Result.Success();
+
         operatorTerminal.LogoutDateTime = dateTimeProvider.UtcNow;
 
         await dbContext.SaveChangesAsync(cancellationToken);
