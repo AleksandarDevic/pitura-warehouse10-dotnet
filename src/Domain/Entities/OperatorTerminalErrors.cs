@@ -16,6 +16,10 @@ public static class OperatorTerminalErrors
         "OperatorTerminal.TerminalNotFound",
         "Terminal not found.");
 
+    public static readonly Error TerminalAlreadyInUse = Error.Conflict(
+        "OperatorTerminal.TerminalAlreadyInUse",
+        "Terminal already in use.");
+
     public static readonly Error OperatorNotFound = Error.NotFound(
         "OperatorTerminal.OperatorNotFound",
         "Operator not found.");
