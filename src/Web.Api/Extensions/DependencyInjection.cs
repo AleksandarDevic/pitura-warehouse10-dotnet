@@ -7,7 +7,7 @@ using Web.Api.Services;
 namespace Web.Api.Extensions;
 public static class DependencyInjection
 {
-    public static IServiceCollection AddPresentation(this IServiceCollection services)
+    public static IServiceCollection AddPresentation(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
@@ -29,6 +29,20 @@ public static class DependencyInjection
 
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+        services.AddCors(options =>
+        {
+            var corsOrigins = configuration.GetSection("CORS").Value?
+                .Split(",", StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => x.Trim())
+                .ToArray();
+
+            options.AddPolicy("AllowSpecificOrigins", builder => builder
+                .WithOrigins(corsOrigins ?? [])
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials());
+        });
 
         return services;
     }

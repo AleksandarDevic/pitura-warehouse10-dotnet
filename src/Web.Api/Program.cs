@@ -18,7 +18,7 @@ builder.Host.UseSerilog((context, loggerConfig) =>
 builder.Services
     .AddInfrastructure(builder.Configuration)
     .AddApplication()
-    .AddPresentation();
+    .AddPresentation(builder.Configuration);
 
 builder.Services.AddEndpoints(Assembly.GetExecutingAssembly());
 
@@ -40,6 +40,8 @@ if (!app.Environment.IsProduction())
 {
     app.UseSwaggerWithUi();
 }
+
+app.UseCors("AllowSpecificOrigins");
 
 app.UseHttpsRedirection();
 
