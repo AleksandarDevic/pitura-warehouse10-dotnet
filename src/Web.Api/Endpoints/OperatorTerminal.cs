@@ -75,7 +75,7 @@ public class OperatorTerminal : IEndpoint
 
             SetRefreshTokenCookie(httpContext, result.Value.RefreshToken);
 
-            return result.Match(Results.NoContent, CustomResults.Problem);
+            return result.Match(Results.Ok, CustomResults.Problem);
         })
         .WithTags(Tags.TerminalOperator);
     }
