@@ -113,7 +113,7 @@ public class OperatorTerminal : IEndpoint
         httpContext.Response.Cookies.Append(HttpContextItemKeys.RefreshTokenCookie, refreshToken.Value, new CookieOptions
         {
             HttpOnly = true,
-            Expires = refreshToken.Expires,
+            Expires = DateTime.UtcNow.AddDays(1),
             SameSite = SameSiteMode.None,
             Secure = true
         });
