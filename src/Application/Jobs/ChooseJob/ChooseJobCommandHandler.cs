@@ -23,6 +23,21 @@ internal sealed class ChooseJobCommandHandler(IApplicationDbContext dbContext, I
         var operatorTerminalId = currentUserService.OperatorTerminalId;
         var operatorId = currentUserService.OperatorId;
 
+        var operatorAlreadyChoseJobInProgress = await dbContext.JobsInProgress
+            .Where(x =>
+                // x.OperatorTerminalId == operatorTerminalId &&
+                x.OperatorTerminal.OperatorId == operatorId &&
+                x.CompletionType == (byte)JobCompletitionType.Initial)
+            .Include(x => x.Job)
+            .Include(x => x.OperatorTerminal)
+        .FirstOrDefaultAsync(cancellationToken);
+
+        if (operatorAlreadyChoseJobInProgress is not null)
+            return Result.Failure<JobInProgressResponse>(JobErrors.OperatorAlredyChoseJobInProgress(
+                operatorAlreadyChoseJobInProgress.Job.Description ?? operatorAlreadyChoseJobInProgress.JobId.ToString(),
+                operatorAlreadyChoseJobInProgress.OperatorTerminal.TerminalId)
+            );
+
         if (job.TakenOverByOperatorName is null)
             job.TakenOverByOperatorName = operatorId.ToString();
 
