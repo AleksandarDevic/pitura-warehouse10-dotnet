@@ -27,7 +27,7 @@ internal sealed class CompleteJobInProgressCommandHandler(IApplicationDbContext 
             return Result.Failure<Result>(JobErrors.JobInProgressNotFound);
 
         if (jobInProgress.CompletionType != (byte)JobCompletitionType.Initial)
-            return Result.Failure<Result>(JobErrors.AlreadyCompleted(jobInProgress.CompletionType));
+            return Result.Failure<Result>(JobErrors.AlreadyCompleted);
 
         if (jobInProgress.OperatorTerminalId != operatorTerminalId || jobInProgress.Job.AssignedOperatorId != operatorId)
             return Result.Failure<Result>(OperatorTerminalErrors.Unauthorized);
