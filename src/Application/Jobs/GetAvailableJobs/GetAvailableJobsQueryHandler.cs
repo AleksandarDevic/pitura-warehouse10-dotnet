@@ -17,7 +17,9 @@ internal sealed class GetAvailableJobsQueryHandler(IApplicationDbContext dbConte
     {
         IQueryable<Job> query = dbContext.Jobs
             .AsNoTracking()
-            .Where(x => x.AssignedOperatorId == null);
+            .Where(x =>
+                x.AssignedOperatorId == null &&
+                x.CompletionType == (byte)JobCompletitionType.SuccessfullyCompleted);
 
         if (!string.IsNullOrEmpty(request.SearchTerm))
         {
