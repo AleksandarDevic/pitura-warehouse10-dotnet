@@ -8,6 +8,10 @@ public static class JobErrors
         "Job.NotFound",
         "Job not found.");
 
+    public static readonly Error JobInProgressNotFound = Error.NotFound(
+        "JobInProgress.NotFound",
+        "JobInProgress not found.");
+
     public static readonly Error AlreadyAssigned = Error.Conflict(
         "Job.AlreadyAssigned",
         "Job has already assigned.");

@@ -10,32 +10,47 @@ using SharedKernel;
 namespace Application.Jobs.GetAssignedJob;
 
 internal sealed class GetAssignedJobQueryHandler(ICurrentUserService currentUserService, IApplicationDbContext dbContext)
-    : IQueryHandler<GetAssignedJobQuery, JobResponse>
+    : IQueryHandler<GetAssignedJobQuery, JobInProgressResponse>
 {
-    public async Task<Result<JobResponse>> Handle(GetAssignedJobQuery request, CancellationToken cancellationToken)
+    public async Task<Result<JobInProgressResponse>> Handle(GetAssignedJobQuery request, CancellationToken cancellationToken)
     {
-        IQueryable<Job> query = dbContext.Jobs
+        var operatorId = currentUserService.OperatorId;
+        var operatorTerminalId = currentUserService.OperatorTerminalId;
+
+        var result = await dbContext.JobsInProgress
             .AsNoTracking()
             .Where(x =>
-                x.AssignedOperatorId == currentUserService.OperatorId &&
-                x.ClosingType != 1);
+                x.OperatorTerminalId == operatorTerminalId &&
+                x.Job.AssignedOperatorId == operatorId &&
+                x.CompletionType == (byte)JobCompletitionType.Initial)
+            .Select(jip => new JobInProgressResponse
+            {
+                Id = jip.Id,
+                JobId = jip.JobId,
+                Job = new JobResponse
+                {
+                    Id = jip.Job.Id,
+                    Description = jip.Job.Description,
+                    AssignedOperatorId = jip.Job.AssignedOperatorId,
+                    Type = (JobType)jip.Job.Type,
+                    CreationDateTime = jip.Job.CreationDateTime,
+                    DueDateTime = jip.Job.DueDateTime,
+                    CompletionType = (JobCompletitionType)jip.Job.CompletionType,
+                    LastNote = jip.Job.LastNote,
+                    InventoryId = jip.Job.InventoryId,
+                    IsVerified = jip.Job.IsVerified,
+                    Client = jip.Job.Client
+                },
+                OperatorTerminalId = jip.OperatorTerminalId,
+                StartDateTime = jip.StartDateTime,
+                EndDateTime = jip.EndDateTime,
+                CompletionType = (JobCompletitionType)jip.CompletionType,
+                Note = jip.Note
+            })
+        .FirstOrDefaultAsync(cancellationToken);
 
-        var jobResponsesQuery = query.Select(x => new JobResponse
-        {
-            Id = x.Id,
-            Description = x.Description,
-            AssignedOperatorId = x.AssignedOperatorId,
-            Type = (JobType)x.Type,
-            CreationDateTime = x.CreationDateTime,
-            DueDateTime = x.DueDateTime,
-            CompletionType = (JobCompletitionType)x.CompletionType,
-            LastNote = x.LastNote,
-            InventoryId = x.InventoryId,
-            IsVerified = x.IsVerified,
-            Client = x.Client
-        });
-
-        var result = await jobResponsesQuery.FirstOrDefaultAsync(cancellationToken);
+        if (result is null)
+            return Result.Failure<JobInProgressResponse>(JobErrors.JobInProgressNotFound);
 
         return result;
     }
