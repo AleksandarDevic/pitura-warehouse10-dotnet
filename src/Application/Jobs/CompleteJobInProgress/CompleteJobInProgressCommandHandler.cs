@@ -16,25 +16,26 @@ internal sealed class CompleteJobInProgressCommandHandler(IApplicationDbContext 
         var operatorTerminalId = currentUserService.OperatorTerminalId;
 
         var jobInProgress = await dbContext.JobsInProgress
-            .Where(x =>
-                x.OperatorTerminalId == operatorTerminalId &&
-                x.Job.AssignedOperatorId == operatorId &&
-                x.CompletionType != (byte)JobCompletitionType.SuccessfullyCompleted)
+            .Where(x => x.Id == request.JobInProgressId)
             .Include(x => x.Job)
+                .ThenInclude(x => x.JobItems)
             .OrderByDescending(x => x.Id)
         .FirstOrDefaultAsync(cancellationToken);
 
         if (jobInProgress is null)
             return Result.Failure<Result>(JobErrors.JobInProgressNotFound);
 
+        if (jobInProgress.OperatorTerminalId != operatorTerminalId || jobInProgress.Job.AssignedOperatorId != operatorId)
+            return Result.Failure<Result>(OperatorTerminalErrors.Unauthorized);
+
         jobInProgress.EndDateTime = dateTimeProvider.UtcNow;
-        jobInProgress.Note = request.Note;
 
         if (request.CompletitionType == JobCompletitionType.SuccessfullyCompleted)
         {
-            // TODO: Add constraint for JobItems -> all must have status completed
+            if (!AllJobItemsHasStatusCompleted(jobInProgress.Job))
+                return Result.Failure<Result>(JobErrors.JobItemsNotReaded);
+                
             jobInProgress.Job.CompletedByOperatorName = operatorId.ToString();
-            jobInProgress.Job.LastNote = request.Note;
         }
         else
         {
@@ -44,8 +45,14 @@ internal sealed class CompleteJobInProgressCommandHandler(IApplicationDbContext 
         jobInProgress.CompletionType = (byte)request.CompletitionType;
         jobInProgress.Job.CompletionType = (byte)request.CompletitionType;
 
+        jobInProgress.Note = request.Note;
+        jobInProgress.Job.LastNote = request.Note;
+
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return Result.Success();
     }
+
+    private static bool AllJobItemsHasStatusCompleted(Job job) =>
+         job.JobItems.All(x => x.ItemStatus == (byte)JobItemStatus.ReadWithRequestedQuantity);
 }

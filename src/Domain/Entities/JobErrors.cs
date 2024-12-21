@@ -19,4 +19,8 @@ public static class JobErrors
     public static readonly Error AlreadyAssigned = Error.Conflict(
         "Job.AlreadyAssigned",
         "Job has already assigned.");
+
+    public static readonly Error JobItemsNotReaded = Error.Conflict(
+        "Job.JobItemsNotReaded",
+        "All Job Items haven't been read.");
 }
