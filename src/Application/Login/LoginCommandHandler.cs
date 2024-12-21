@@ -45,9 +45,10 @@ internal sealed class LoginCommandHandler(
             .Where(x =>
                 x.OperatorTerminal.OperatorId == operater.Id &&
                 x.OperatorTerminal.LogoutDateTime == null &&
-                x.Job.AssignedOperatorId == operater.Id &&
                 x.EndDateTime == null &&
-                x.CompletionType == (byte)JobCompletitionType.Initial)
+                x.CompletionType == (byte)JobCompletitionType.Initial &&
+                x.Job.AssignedOperatorId == operater.Id &&
+                x.Job.CompletionType != (byte)JobCompletitionType.SuccessfullyCompleted)
             .OrderBy(x => x.Id)
         .ToListAsync(cancellationToken);
 
