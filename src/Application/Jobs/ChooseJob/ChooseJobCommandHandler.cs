@@ -13,15 +13,21 @@ internal sealed class ChooseJobCommandHandler(IApplicationDbContext dbContext, I
 {
     public async Task<Result<JobInProgressResponse>> Handle(ChooseJobCommand request, CancellationToken cancellationToken)
     {
-        var job = await dbContext.Jobs.FirstOrDefaultAsync(x => x.Id == request.JobId, cancellationToken);
+        var job = await dbContext.Jobs
+            .Where(x => x.Id == request.JobId)
+        .FirstOrDefaultAsync(cancellationToken);
+
         if (job is null)
             return Result.Failure<JobInProgressResponse>(JobErrors.NotFound);
 
-        if (job.AssignedOperatorId is not null)
-            return Result.Failure<JobInProgressResponse>(JobErrors.AlreadyAssigned);
+        if (job.CompletionType == (byte)JobCompletitionType.SuccessfullyCompleted)
+            return Result.Failure<JobInProgressResponse>(JobErrors.AlreadyCompleted);
 
         var operatorTerminalId = currentUserService.OperatorTerminalId;
         var operatorId = currentUserService.OperatorId;
+
+        if (job.AssignedOperatorId is not null && job.AssignedOperatorId != operatorId)
+            return Result.Failure<JobInProgressResponse>(JobErrors.AlreadyAssigned);
 
         var operatorAlreadyChoseJobInProgress = await dbContext.JobsInProgress
             .Where(x =>

@@ -20,9 +20,9 @@ public static class JobErrors
         "Job.AlreadyAssigned",
         "Job has already assigned.");
 
-    public static Error AlreadyCompleted(byte jobInProgressCompleteType) => Error.Conflict(
+    public static readonly Error AlreadyCompleted = Error.Conflict(
         "JobInProgress.AlreadyCompleted",
-        $"JobInProgress has already completed with compete-type: {jobInProgressCompleteType}.");
+        $"JobInProgress has already completed.");
 
     public static readonly Error JobItemsNotReaded = Error.Conflict(
         "Job.JobItemsNotReaded",
