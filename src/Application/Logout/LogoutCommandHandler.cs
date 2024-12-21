@@ -3,11 +3,12 @@ using Application.Abstractions.Messaging;
 using Domain.Entities;
 using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using SharedKernel;
 
 namespace Application.Logout;
 
-internal sealed class LogoutCommandHandler(IApplicationDbContext dbContext, IDateTimeProvider dateTimeProvider) : ICommandHandler<LogoutCommand>
+internal sealed class LogoutCommandHandler(IApplicationDbContext dbContext, IDateTimeProvider dateTimeProvider, ILogger<LogoutCommandHandler> logger) : ICommandHandler<LogoutCommand>
 {
     public async Task<Result> Handle(LogoutCommand request, CancellationToken cancellationToken)
     {
@@ -31,6 +32,8 @@ internal sealed class LogoutCommandHandler(IApplicationDbContext dbContext, IDat
             jobInProgress.CompletionType = (byte)JobCompletitionType.Aborted;
             jobInProgress.Job.AssignedOperatorId = null;
             jobInProgress.Job.CompletionType = (byte)JobCompletitionType.Aborted;
+
+            logger.LogWarning("For OperatorTerminalId: {OperatorTerminalId},  JobInProgressId: {JobInProgressId} and JobId: {JobId} CompletitionType set to 'Aborted' and AssignedOperatorId to 'null'.", operatorTerminal.Id, jobInProgress.Id, jobInProgress.Job.Id);
         }
 
         operatorTerminal.LogoutDateTime = dateTimeProvider.UtcNow;
