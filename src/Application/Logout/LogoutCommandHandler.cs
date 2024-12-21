@@ -19,22 +19,22 @@ internal sealed class LogoutCommandHandler(IApplicationDbContext dbContext, IDat
         if (operatorTerminal.LogoutDateTime is not null)
             return Result.Success();
 
-        var jobsInProgressForOperatorTerminal = await dbContext.JobsInProgress
-            .Where(x =>
-                x.OperatorTerminalId == operatorTerminal.Id &&
-                x.CompletionType == (byte)JobCompletitionType.Initial)
-            .Include(x => x.Job)
-            .Include(x => x.OperatorTerminal)
-        .ToListAsync(cancellationToken);
+        // var jobsInProgressForOperatorTerminal = await dbContext.JobsInProgress
+        //     .Where(x =>
+        //         x.OperatorTerminalId == operatorTerminal.Id &&
+        //         x.CompletionType == (byte)JobCompletitionType.Initial)
+        //     .Include(x => x.Job)
+        //     .Include(x => x.OperatorTerminal)
+        // .ToListAsync(cancellationToken);
 
-        foreach (var jobInProgress in jobsInProgressForOperatorTerminal)
-        {
-            jobInProgress.CompletionType = (byte)JobCompletitionType.Aborted;
-            jobInProgress.Job.AssignedOperatorId = null;
-            jobInProgress.Job.CompletionType = (byte)JobCompletitionType.Aborted;
+        // foreach (var jobInProgress in jobsInProgressForOperatorTerminal)
+        // {
+        //     jobInProgress.CompletionType = (byte)JobCompletitionType.Aborted;
+        //     jobInProgress.Job.AssignedOperatorId = null;
+        //     jobInProgress.Job.CompletionType = (byte)JobCompletitionType.Aborted;
 
-            logger.LogWarning("For OperatorTerminalId: {OperatorTerminalId},  JobInProgressId: {JobInProgressId} and JobId: {JobId} CompletitionType set to 'Aborted' and AssignedOperatorId to 'null'.", operatorTerminal.Id, jobInProgress.Id, jobInProgress.Job.Id);
-        }
+        //     logger.LogWarning("For OperatorTerminalId: {OperatorTerminalId},  JobInProgressId: {JobInProgressId} and JobId: {JobId} CompletitionType set to 'Aborted' and AssignedOperatorId to 'null'.", operatorTerminal.Id, jobInProgress.Id, jobInProgress.Job.Id);
+        // }
 
         operatorTerminal.LogoutDateTime = dateTimeProvider.UtcNow;
 
