@@ -23,7 +23,7 @@ internal sealed class GetAssignedJobQueryHandler(ICurrentUserService currentUser
                 x.OperatorTerminalId == operatorTerminalId &&
                 x.Job.AssignedOperatorId == operatorId &&
                 x.EndDateTime == null &&
-                x.CompletionType != (byte)JobCompletitionType.SuccessfullyCompleted)
+                x.CompletionType == (byte)JobCompletitionType.Initial)
             .Select(jip => new JobInProgressResponse
             {
                 Id = jip.Id,
