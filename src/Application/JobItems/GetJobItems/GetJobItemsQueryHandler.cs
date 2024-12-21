@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
 using Application.Abstractions.Messaging;
 using Application.Extensions;
@@ -10,11 +11,19 @@ using SharedKernel;
 
 namespace Application.JobItems.GetJobItems;
 
-internal sealed class GetJobItemsQueryHandler(IApplicationDbContext dbContext)
+internal sealed class GetJobItemsQueryHandler(IApplicationDbContext dbContext, ICurrentUserService currentUserService)
     : IQueryHandler<GetJobItemsQuery, PagedList<JobItemResponse>>
 {
     public async Task<Result<PagedList<JobItemResponse>>> Handle(GetJobItemsQuery request, CancellationToken cancellationToken)
     {
+        var job = await dbContext.Jobs.Where(x => x.Id == request.JobId).FirstOrDefaultAsync(cancellationToken);
+        if (job is null)
+            return Result.Failure<PagedList<JobItemResponse>>(JobErrors.NotFound);
+
+        var operatorId = currentUserService.OperatorId;
+        if (job.AssignedOperatorId != operatorId)
+            return Result.Failure<PagedList<JobItemResponse>>(OperatorTerminalErrors.Unauthorized);
+
         IQueryable<JobItem> query = dbContext.JobItems
             .AsNoTracking()
             .Where(x => x.JobId == request.JobId);
