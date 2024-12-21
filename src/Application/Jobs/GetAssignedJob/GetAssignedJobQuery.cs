@@ -3,4 +3,4 @@ using Domain.Models;
 
 namespace Application.Jobs.GetAssignedJob;
 
-public record GetAssignedJobQuery : IQuery<JobInProgressResponse?>;
+public record GetAssignedJobQuery : IQuery<JobInProgressResponse>;

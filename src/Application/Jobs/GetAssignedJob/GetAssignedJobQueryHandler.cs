@@ -10,7 +10,7 @@ using SharedKernel;
 namespace Application.Jobs.GetAssignedJob;
 
 internal sealed class GetAssignedJobQueryHandler(ICurrentUserService currentUserService, IApplicationDbContext dbContext)
-    : IQueryHandler<GetAssignedJobQuery, JobInProgressResponse?>
+    : IQueryHandler<GetAssignedJobQuery, JobInProgressResponse>
 {
     public async Task<Result<JobInProgressResponse>> Handle(GetAssignedJobQuery request, CancellationToken cancellationToken)
     {
@@ -51,8 +51,8 @@ internal sealed class GetAssignedJobQueryHandler(ICurrentUserService currentUser
             .OrderByDescending(x => x.Id)
         .FirstOrDefaultAsync(cancellationToken);
 
-        // if (result is null)
-        // return Result.Failure<JobInProgressResponse>(JobErrors.JobInProgressNotFound);
+        if (result is null)
+            return Result.Failure<JobInProgressResponse>(JobErrors.JobInProgressNotFound);
 
         return result;
     }
