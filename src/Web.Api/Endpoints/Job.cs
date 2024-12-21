@@ -1,5 +1,6 @@
 using Application.JobItems.GetJobItems;
 using Application.Jobs.ChooseJob;
+using Application.Jobs.CompleteJobInProgress;
 using Application.Jobs.GetAssignedJob;
 using Application.Jobs.GetAvailableJobs;
 using MediatR;
@@ -39,6 +40,33 @@ public class Job : IEndpoint
         .WithTags(Tags.Job)
         .RequireAuthorization();
 
+        app.MapPost("job/{jobId}/choose", async (
+            ISender sender,
+            [FromRoute] long jobId,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new ChooseJobCommand(jobId);
+            var result = await sender.Send(command, cancellationToken);
+
+            return result.Match(Results.Ok, CustomResults.Problem);
+        })
+        .WithTags(Tags.Job)
+        .RequireAuthorization();
+
+        app.MapPost("job-in-progress/{jobInProgressId}/complete", async (
+            ISender sender,
+            [FromRoute] long jobInProgressId,
+            [FromBody] CompleteJobInProgressRequest request,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new CompleteJobInProgressCommand(jobInProgressId, request.CompletitionType, request.Note);
+            var result = await sender.Send(command, cancellationToken);
+
+            return result.Match(Results.NoContent, CustomResults.Problem);
+        })
+        .WithTags(Tags.JobInProgress)
+        .RequireAuthorization();
+
         app.MapGet("job/{jobId}/items", async (
             ISender sender,
             [FromRoute] long jobId,
@@ -60,19 +88,5 @@ public class Job : IEndpoint
         })
         .WithTags(Tags.Job)
         .RequireAuthorization();
-
-        app.MapPost("job/{jobId}/choose", async (
-            ISender sender,
-            [FromRoute] long jobId,
-            CancellationToken cancellationToken) =>
-        {
-            var command = new ChooseJobCommand(jobId);
-            var result = await sender.Send(command, cancellationToken);
-
-            return result.Match(Results.Ok, CustomResults.Problem);
-        })
-        .WithTags(Tags.Job)
-        .RequireAuthorization();
-
     }
 }

@@ -22,8 +22,8 @@ internal sealed class GetAssignedJobQueryHandler(ICurrentUserService currentUser
             .Where(x =>
                 x.OperatorTerminalId == operatorTerminalId &&
                 x.Job.AssignedOperatorId == operatorId &&
-                x.EndDateTime == null)
-            // && x.CompletionType == (byte)JobCompletitionType.Initial)
+                x.EndDateTime == null &&
+                x.CompletionType != (byte)JobCompletitionType.SuccessfullyCompleted)
             .Select(jip => new JobInProgressResponse
             {
                 Id = jip.Id,
@@ -48,6 +48,7 @@ internal sealed class GetAssignedJobQueryHandler(ICurrentUserService currentUser
                 CompletionType = (JobCompletitionType)jip.CompletionType,
                 Note = jip.Note
             })
+            .OrderByDescending(x => x.Id)
         .FirstOrDefaultAsync(cancellationToken);
 
         if (result is null)
