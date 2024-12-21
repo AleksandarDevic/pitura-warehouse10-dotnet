@@ -16,7 +16,8 @@ internal sealed class CompleteJobInProgressCommandHandler(IApplicationDbContext 
         var operatorTerminalId = currentUserService.OperatorTerminalId;
 
         var jobInProgress = await dbContext.JobsInProgress
-            .Where(x => x.Id == request.JobInProgressId)
+            .Where(x =>
+                x.Id == request.JobInProgressId)
             .Include(x => x.Job)
                 .ThenInclude(x => x.JobItems)
             .OrderByDescending(x => x.Id)
@@ -24,6 +25,9 @@ internal sealed class CompleteJobInProgressCommandHandler(IApplicationDbContext 
 
         if (jobInProgress is null)
             return Result.Failure<Result>(JobErrors.JobInProgressNotFound);
+
+        if (jobInProgress.CompletionType != (byte)JobCompletitionType.Initial)
+            return Result.Failure<Result>(JobErrors.AlreadyCompleted(jobInProgress.CompletionType));
 
         if (jobInProgress.OperatorTerminalId != operatorTerminalId || jobInProgress.Job.AssignedOperatorId != operatorId)
             return Result.Failure<Result>(OperatorTerminalErrors.Unauthorized);
@@ -34,7 +38,7 @@ internal sealed class CompleteJobInProgressCommandHandler(IApplicationDbContext 
         {
             if (!AllJobItemsHasStatusCompleted(jobInProgress.Job))
                 return Result.Failure<Result>(JobErrors.JobItemsNotReaded);
-                
+
             jobInProgress.Job.CompletedByOperatorName = operatorId.ToString();
         }
         else
