@@ -46,12 +46,12 @@ public class JwtProvider(IDateTimeProvider dateTimeProvider, IOptions<JwtOptions
             AccessToken = new AccessToken
             {
                 Value = token,
-                Expires = (DateTime)tokenDescriptor.Expires
+                // Expires = (DateTime)tokenDescriptor.Expires
             },
             RefreshToken = new RefreshToken
             {
                 Value = operatorTerminal.Id.ToString(),
-                Expires = DateTime.UtcNow.AddDays(_options.RefreshTokenExpirationInDays)
+                // Expires = DateTime.UtcNow.AddDays(_options.RefreshTokenExpirationInDays)
             }
         };
 

@@ -19,16 +19,19 @@ internal sealed class LogoutCommandHandler(IApplicationDbContext dbContext, IDat
         if (operatorTerminal.LogoutDateTime is not null)
             return Result.Success();
 
-        // var jobsInProgressForOperatorTerminal = await dbContext.JobsInProgress
+        // var jobsInProgressForOperator = await dbContext.JobsInProgress
         //     .Where(x =>
-        //         x.OperatorTerminalId == operatorTerminal.Id &&
+        //         x.OperatorTerminal.OperatorId == operatorTerminal.Id &&
         //         x.CompletionType == (byte)JobCompletitionType.Initial)
         //     .Include(x => x.Job)
         //     .Include(x => x.OperatorTerminal)
         // .ToListAsync(cancellationToken);
 
-        // foreach (var jobInProgress in jobsInProgressForOperatorTerminal)
+        // var dateTimeNow = dateTimeProvider.UtcNow;
+
+        // foreach (var jobInProgress in jobsInProgressForOperator)
         // {
+        //     jobInProgress.EndDateTime = dateTimeNow;
         //     jobInProgress.CompletionType = (byte)JobCompletitionType.Aborted;
         //     jobInProgress.Job.AssignedOperatorId = null;
         //     jobInProgress.Job.CompletionType = (byte)JobCompletitionType.Aborted;
