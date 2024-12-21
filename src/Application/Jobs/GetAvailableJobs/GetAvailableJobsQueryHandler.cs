@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
 using Application.Abstractions.Messaging;
 using Application.Extensions;
@@ -10,15 +11,16 @@ using SharedKernel;
 
 namespace Application.Jobs.GetAvailableJobs;
 
-internal sealed class GetAvailableJobsQueryHandler(IApplicationDbContext dbContext)
+internal sealed class GetAvailableJobsQueryHandler(IApplicationDbContext dbContext, ICurrentUserService currentUserService)
     : IQueryHandler<GetAvailableJobsQuery, PagedList<JobResponse>>
 {
     public async Task<Result<PagedList<JobResponse>>> Handle(GetAvailableJobsQuery request, CancellationToken cancellationToken)
     {
+        var operatorId = currentUserService.OperatorId;
         IQueryable<Job> query = dbContext.Jobs
             .AsNoTracking()
             .Where(x =>
-                x.AssignedOperatorId == null &&
+                (x.AssignedOperatorId == null || x.AssignedOperatorId == operatorId) &&
                 x.CompletionType != (byte)JobCompletitionType.SuccessfullyCompleted);
 
         if (!string.IsNullOrEmpty(request.SearchTerm))
