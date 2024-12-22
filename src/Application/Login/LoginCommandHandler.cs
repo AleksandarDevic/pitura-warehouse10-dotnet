@@ -19,71 +19,65 @@ internal sealed class LoginCommandHandler(
         if (terminal is null)
             return Result.Failure<LoginCommandResult>(OperatorTerminalErrors.TerminalNotFound);
 
-        var operater = await dbContext.Operators.FirstOrDefaultAsync(x => x.Password == request.OperatorPassword && x.IsActive, cancellationToken);
-        if (operater is null)
+        var operatorDb = await dbContext.Operators.FirstOrDefaultAsync(x => x.Password == request.OperatorPassword && x.IsActive, cancellationToken);
+        if (operatorDb is null)
             return Result.Failure<LoginCommandResult>(OperatorTerminalErrors.BadCredentials);
+
+        var operatorId = operatorDb.Id;
+        var terminalId = terminal.Id;
 
         var terminalAlreadyInUse = await dbContext.OperatorTerminalSessions.AnyAsync(x => x.TerminalId == terminal.Id && x.LogoutDateTime == null, cancellationToken);
         if (terminalAlreadyInUse)
             return Result.Failure<LoginCommandResult>(OperatorTerminalErrors.TerminalAlreadyInUse);
 
-        var operatorAlreadyLoggedIn = await dbContext.OperatorTerminalSessions.FirstOrDefaultAsync(x => x.OperatorId == operater.Id && x.LogoutDateTime == null, cancellationToken);
+        var operatorAlreadyLoggedIn = await dbContext.OperatorTerminalSessions.FirstOrDefaultAsync(x => x.OperatorId == operatorDb.Id && x.LogoutDateTime == null, cancellationToken);
 
         int currentOperatorTerminalMaxId = await dbContext.OperatorTerminalSessions.MaxAsync(x => x.Id, cancellationToken);
 
         OperatorTerminal newOperatorTerminal = new()
         {
             Id = currentOperatorTerminalMaxId + 1,
-            Operator = operater,
-            Terminal = terminal,
+            OperatorId = operatorId,
+            TerminalId = terminalId,
             LoginDateTime = dateTimeProvider.UtcNow
         };
 
         await dbContext.OperatorTerminalSessions.AddAsync(newOperatorTerminal, cancellationToken);
 
-        var jobsInProgressNotCompletedForOperator = await dbContext.JobsInProgress
+        var lastAssignedJob = await dbContext.Jobs
+            .AsNoTracking()
             .Where(x =>
-                x.OperatorTerminal.OperatorId == operater.Id &&
-                x.OperatorTerminal.LogoutDateTime == null &&
-                x.EndDateTime == null &&
-                x.CompletionType == (byte)JobCompletitionType.Initial &&
-                x.Job.AssignedOperatorId == operater.Id &&
-                x.Job.CompletionType != (byte)JobCompletitionType.SuccessfullyCompleted)
-            .OrderBy(x => x.Id)
-        .ToListAsync(cancellationToken);
+                x.AssignedOperatorId == operatorId &&
+                x.ClosingType == (byte)JobCompletitionType.Initial)
+            .Include(x => x.JobsInProgress)
+            .Include(x => x.JobItems)
+            .OrderByDescending(x => x.Id)
+        .FirstOrDefaultAsync(cancellationToken);
 
-        if (jobsInProgressNotCompletedForOperator.Count > 1)
+        if (lastAssignedJob is not null)
         {
-            logger.LogInformation(
-                "For OperatorId: {OperatorId} there is: {Count} JobInProgress with status: {Status}",
-                 operater.Id, jobsInProgressNotCompletedForOperator.Count, (byte)JobCompletitionType.Initial);
+            var lastAssignedJobInProgress = lastAssignedJob.JobsInProgress
+                .Where(x => x.CompletionType == (byte)JobCompletitionType.Initial)
+                .OrderByDescending(x => x.Id)
+            .FirstOrDefault();
 
-            return Result.Failure<LoginCommandResult>(Error.Failure("ContactAdministrator", "ContactAdministrator"));
-        }
-
-        if (jobsInProgressNotCompletedForOperator.Count == 1)
-        {
-            var existingJobInProgressNotCompletedForOperator = jobsInProgressNotCompletedForOperator[0];
-
-            int currentJobInProgressMaxId = await dbContext.JobsInProgress.MaxAsync(x => x.Id, cancellationToken);
-
-            var newJobInProgress = new JobInProgress
+            if (lastAssignedJobInProgress is not null)
             {
-                Id = currentJobInProgressMaxId + 1,
-                JobId = existingJobInProgressNotCompletedForOperator.JobId,
-                OperatorTerminalId = newOperatorTerminal.Id,
-                StartDateTime = dateTimeProvider.UtcNow,
-                EndDateTime = null,
-                CompletionType = (byte)JobCompletitionType.Initial,
-                Note = null
-            };
+                int currentJobInProgressMaxId = await dbContext.JobsInProgress.MaxAsync(x => x.Id, cancellationToken);
 
-            await dbContext.JobsInProgress.AddAsync(newJobInProgress, cancellationToken);
+                var newJobInProgress = new JobInProgress
+                {
+                    Id = currentJobInProgressMaxId + 1,
+                    JobId = lastAssignedJobInProgress.JobId,
+                    OperatorTerminalId = newOperatorTerminal.Id,
+                    StartDateTime = dateTimeProvider.UtcNow,
+                    EndDateTime = null,
+                    CompletionType = (byte)JobCompletitionType.Initial,
+                    Note = null
+                };
 
-            // Check with Gacic
-            existingJobInProgressNotCompletedForOperator.EndDateTime = dateTimeProvider.UtcNow;
-            existingJobInProgressNotCompletedForOperator.CompletionType = (byte)JobCompletitionType.Aborted;
-            existingJobInProgressNotCompletedForOperator.Note = "Closed by another login";
+                await dbContext.JobsInProgress.AddAsync(newJobInProgress, cancellationToken);
+            }
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
