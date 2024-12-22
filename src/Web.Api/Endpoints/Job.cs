@@ -5,6 +5,7 @@ using Application.Jobs.ChooseJob;
 using Application.Jobs.CompleteJobInProgress;
 using Application.Jobs.GetAssignedJob;
 using Application.Jobs.GetAvailableJobs;
+using Application.Jobs.IsJobInProgressClosable;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SharedKernel;
@@ -53,6 +54,19 @@ public class Job : IEndpoint
             return result.Match(Results.Ok, CustomResults.Problem);
         })
         .WithTags(Tags.Job)
+        .RequireAuthorization();
+
+        app.MapGet("job-in-progress/{jobInProgressId}/is-closable", async (
+            ISender sender,
+            [FromRoute] long jobInProgressId,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new IsJobInProgressClosableQuery(jobInProgressId);
+            var result = await sender.Send(command, cancellationToken);
+
+            return result.Match(Results.Ok, CustomResults.Problem);
+        })
+        .WithTags(Tags.JobInProgress)
         .RequireAuthorization();
 
         app.MapPost("job-in-progress/{jobInProgressId}/complete", async (
