@@ -20,7 +20,7 @@ internal sealed class GetAssignedJobQueryHandler(ICurrentUserService currentUser
             .AsNoTracking()
             .Where(x =>
                 x.AssignedOperatorId == operatorId &&
-                x.ClosingType == (byte)JobCompletitionType.Initial)
+                x.CompletionType == (byte)JobCompletitionType.Initial)
             .Include(x => x.JobsInProgress)
             .OrderByDescending(x => x.Id)
         .FirstOrDefaultAsync(cancellationToken);
