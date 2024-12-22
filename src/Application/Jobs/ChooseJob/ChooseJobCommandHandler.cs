@@ -5,11 +5,14 @@ using Domain.Entities;
 using Domain.Enums;
 using Domain.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using SharedKernel;
 
 namespace Application.Jobs.ChooseJob;
 
-internal sealed class ChooseJobCommandHandler(IApplicationDbContext dbContext, ICurrentUserService currentUserService, IDateTimeProvider dateTimeProvider) : ICommandHandler<ChooseJobCommand, JobInProgressResponse>
+internal sealed class ChooseJobCommandHandler(
+    IApplicationDbContext dbContext, ICurrentUserService currentUserService, IDateTimeProvider dateTimeProvider, ILogger<ChooseJobCommandHandler> logger)
+    : ICommandHandler<ChooseJobCommand, JobInProgressResponse>
 {
     public async Task<Result<JobInProgressResponse>> Handle(ChooseJobCommand request, CancellationToken cancellationToken)
     {
@@ -29,20 +32,29 @@ internal sealed class ChooseJobCommandHandler(IApplicationDbContext dbContext, I
         if (job.AssignedOperatorId is not null && job.AssignedOperatorId != operatorId)
             return Result.Failure<JobInProgressResponse>(JobErrors.AlreadyAssigned);
 
-        var operatorAlreadyChoseJobInProgress = await dbContext.JobsInProgress
-            .Where(x =>
-                // x.OperatorTerminalId == operatorTerminalId &&
-                x.OperatorTerminal.OperatorId == operatorId &&
-                x.CompletionType == (byte)JobCompletitionType.Initial)
-            .Include(x => x.Job)
-            .Include(x => x.OperatorTerminal)
-        .FirstOrDefaultAsync(cancellationToken);
+        // 1.Nema poslova u toku, tada mozes da izaberes posao! 
+        // 2.Neko je uzeo da radi posao ima 1 posao u toku i tada ne moze da izabere posao!
+        // 3.Neko se vise puta logova i izlogovao ali nista nije radio a izabrao je posao -> to znaci da ima vise poslova u toku sa 0, tu ne moze da izabere posao!
+        // 4.Ako je poslovaUPocetku status !=0 tada moze da radi save. i tada radim novi posao u toku sa statusom =0 i tada je taj posao ponovo zakljucan i menjam glavni status PosloviUPocetku na 0.
+        // 0.Assign vrati poslednji duplikat iz poslova u toku
 
-        if (operatorAlreadyChoseJobInProgress is not null)
-            return Result.Failure<JobInProgressResponse>(JobErrors.OperatorAlredyChoseJobInProgress(
-                operatorAlreadyChoseJobInProgress.Job.Description ?? operatorAlreadyChoseJobInProgress.JobId.ToString(),
-                operatorAlreadyChoseJobInProgress.OperatorTerminal.TerminalId)
-            );
+        var jobsInProgressNotCompletedForOperator = await dbContext.JobsInProgress
+             .Where(x =>
+                x.OperatorTerminal.OperatorId == operatorId &&
+                x.CompletionType == (byte)JobCompletitionType.Initial &&
+                x.Job.AssignedOperatorId == operatorId &&
+                x.Job.CompletionType != (byte)JobCompletitionType.SuccessfullyCompleted)
+             .OrderBy(x => x.Id)
+         .ToListAsync(cancellationToken);
+
+        if (jobsInProgressNotCompletedForOperator.Count > 0)
+        {
+            logger.LogInformation(
+                "For OperatorId: {OperatorId} there is: {Count} JobInProgress with status: {Status}",
+                 operatorId, jobsInProgressNotCompletedForOperator.Count, (byte)JobCompletitionType.Initial);
+
+            return Result.Failure<JobInProgressResponse>(Error.Failure("ContactAdministrator", "ContactAdministrator"));
+        }
 
         if (job.TakenOverByOperatorName is null)
             job.TakenOverByOperatorName = operatorId.ToString();

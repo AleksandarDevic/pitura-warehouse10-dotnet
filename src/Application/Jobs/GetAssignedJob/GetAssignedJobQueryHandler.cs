@@ -15,45 +15,53 @@ internal sealed class GetAssignedJobQueryHandler(ICurrentUserService currentUser
     public async Task<Result<JobInProgressResponse>> Handle(GetAssignedJobQuery request, CancellationToken cancellationToken)
     {
         var operatorId = currentUserService.OperatorId;
-        var operatorTerminalId = currentUserService.OperatorTerminalId;
 
-        var result = await dbContext.JobsInProgress
+        var lastAssignedJob = await dbContext.Jobs
             .AsNoTracking()
             .Where(x =>
-                x.OperatorTerminalId == operatorTerminalId &&
-                x.Job.AssignedOperatorId == operatorId &&
-                x.EndDateTime == null &&
-                x.CompletionType == (byte)JobCompletitionType.Initial)
-            .Select(jip => new JobInProgressResponse
-            {
-                Id = jip.Id,
-                JobId = jip.JobId,
-                Job = new JobResponse
-                {
-                    Id = jip.Job.Id,
-                    Description = jip.Job.Description,
-                    AssignedOperatorId = jip.Job.AssignedOperatorId,
-                    Type = (JobType)jip.Job.Type,
-                    CreationDateTime = jip.Job.CreationDateTime,
-                    DueDateTime = jip.Job.DueDateTime,
-                    CompletionType = (JobCompletitionType)jip.Job.CompletionType,
-                    LastNote = jip.Job.LastNote,
-                    InventoryId = jip.Job.InventoryId,
-                    IsVerified = jip.Job.IsVerified,
-                    Client = jip.Job.Client
-                },
-                OperatorTerminalId = jip.OperatorTerminalId,
-                StartDateTime = jip.StartDateTime,
-                EndDateTime = jip.EndDateTime,
-                CompletionType = (JobCompletitionType)jip.CompletionType,
-                Note = jip.Note
-            })
+                x.AssignedOperatorId == operatorId &&
+                x.ClosingType == (byte)JobCompletitionType.Initial)
+            .Include(x => x.JobsInProgress)
+            .Include(x => x.JobItems)
             .OrderByDescending(x => x.Id)
         .FirstOrDefaultAsync(cancellationToken);
 
-        if (result is null)
+        if (lastAssignedJob is null)
             return Result.Failure<JobInProgressResponse>(JobErrors.JobInProgressNotFound);
 
-        return result;
+        var lastAssignedJobInProgress = lastAssignedJob.JobsInProgress
+            .Where(x => x.CompletionType == (byte)JobCompletitionType.Initial)
+            .OrderByDescending(x => x.Id)
+        .FirstOrDefault();
+
+        if (lastAssignedJobInProgress is null)
+            return Result.Failure<JobInProgressResponse>(JobErrors.JobInProgressNotFound);
+
+        var jobInProgressResponse = new JobInProgressResponse
+        {
+            Id = lastAssignedJobInProgress.Id,
+            JobId = lastAssignedJobInProgress.JobId,
+            Job = new JobResponse
+            {
+                Id = lastAssignedJobInProgress.Job.Id,
+                Description = lastAssignedJobInProgress.Job.Description,
+                AssignedOperatorId = lastAssignedJobInProgress.Job.AssignedOperatorId,
+                Type = (JobType)lastAssignedJobInProgress.Job.Type,
+                CreationDateTime = lastAssignedJobInProgress.Job.CreationDateTime,
+                DueDateTime = lastAssignedJobInProgress.Job.DueDateTime,
+                CompletionType = (JobCompletitionType)lastAssignedJobInProgress.Job.CompletionType,
+                LastNote = lastAssignedJobInProgress.Job.LastNote,
+                InventoryId = lastAssignedJobInProgress.Job.InventoryId,
+                IsVerified = lastAssignedJobInProgress.Job.IsVerified,
+                Client = lastAssignedJobInProgress.Job.Client
+            },
+            OperatorTerminalId = lastAssignedJobInProgress.OperatorTerminalId,
+            StartDateTime = lastAssignedJobInProgress.StartDateTime,
+            EndDateTime = lastAssignedJobInProgress.EndDateTime,
+            CompletionType = (JobCompletitionType)lastAssignedJobInProgress.CompletionType,
+            Note = lastAssignedJobInProgress.Note
+        };
+
+        return jobInProgressResponse;
     }
 }

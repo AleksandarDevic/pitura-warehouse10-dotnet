@@ -82,6 +82,8 @@ internal sealed class LoginCommandHandler(
 
             // Check with Gacic
             existingJobInProgressNotCompletedForOperator.EndDateTime = dateTimeProvider.UtcNow;
+            existingJobInProgressNotCompletedForOperator.CompletionType = (byte)JobCompletitionType.Aborted;
+            existingJobInProgressNotCompletedForOperator.Note = "Closed by another login";
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
