@@ -36,7 +36,7 @@ internal sealed class IsJobInProgressClosableQueryHandler(IApplicationDbContext 
         {
             IsClosable = AllJobItemsReadWithRequestedQuantity(jobInProgress.Job),
             ItemsReadWithRequestedQuantity = CountJobItemsReadWithRequestedQuantity(jobInProgress.Job),
-            TotalItems = jobInProgress.JobItems.Count
+            TotalItems = jobInProgress.Job.JobItems.Count
         };
 
         return result;
