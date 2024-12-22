@@ -1,3 +1,4 @@
+using Application.JobItems.CompleteJobItem;
 using Application.JobItems.GetJobItems;
 using Application.Jobs.ChooseJob;
 using Application.Jobs.CompleteJobInProgress;
@@ -87,6 +88,21 @@ public class Job : IEndpoint
             return result.Match(Results.Ok, CustomResults.Problem);
         })
         .WithTags(Tags.Job)
+        .RequireAuthorization();
+
+        app.MapPost("job-in-progress/{jobInProgressId}/job-item/{jobItemId}/complete", async (
+            ISender sender,
+            [FromRoute] long jobInProgressId,
+            [FromRoute] long jobItemId,
+            [FromBody] CompleteJobItemRequest request,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new CompleteJobItemCommand(request.JobInProgressId, request.JobItemId, request.EnteredQuantity, request.Status);
+            var result = await sender.Send(command, cancellationToken);
+
+            return result.Match(Results.NoContent, CustomResults.Problem);
+        })
+        .WithTags(Tags.JobInProgress)
         .RequireAuthorization();
     }
 }
