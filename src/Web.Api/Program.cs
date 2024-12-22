@@ -43,7 +43,7 @@ if (!app.Environment.IsProduction())
 
 app.UseCors("AllowSpecificOrigins");
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 app.MapHealthChecks("health", new HealthCheckOptions
 {
