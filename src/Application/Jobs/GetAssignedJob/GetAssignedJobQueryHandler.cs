@@ -15,12 +15,14 @@ internal sealed class GetAssignedJobQueryHandler(ICurrentUserService currentUser
     public async Task<Result<JobInProgressResponse>> Handle(GetAssignedJobQuery request, CancellationToken cancellationToken)
     {
         var operatorId = currentUserService.OperatorId;
+        var operatorTerminalId = currentUserService.OperatorTerminalId;
 
         var lastAssignedJob = await dbContext.Jobs
             .AsNoTracking()
             .Where(x =>
                 x.AssignedOperatorId == operatorId &&
-                x.CompletionType != (byte)JobCompletitionType.SuccessfullyCompleted)
+                x.CompletionType != (byte)JobCompletitionType.SuccessfullyCompleted &&
+                x.JobsInProgress.Any(jip => jip.CompletionType == (byte)JobCompletitionType.Initial && jip.OperatorTerminalId == operatorTerminalId))
             .Include(x => x.JobsInProgress)
             .OrderByDescending(x => x.Id)
         .FirstOrDefaultAsync(cancellationToken);
@@ -29,7 +31,7 @@ internal sealed class GetAssignedJobQueryHandler(ICurrentUserService currentUser
             return Result.Failure<JobInProgressResponse>(JobErrors.JobInProgressNotFound);
 
         var lastAssignedJobInProgress = lastAssignedJob.JobsInProgress
-            .Where(x => x.CompletionType == (byte)JobCompletitionType.Initial)
+            .Where(x => x.CompletionType == (byte)JobCompletitionType.Initial && x.OperatorTerminalId == operatorTerminalId)
             .OrderByDescending(x => x.Id)
         .FirstOrDefault();
 

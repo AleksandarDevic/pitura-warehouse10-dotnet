@@ -23,7 +23,7 @@ internal sealed class LogoutCommandHandler(IApplicationDbContext dbContext, IDat
             .AsNoTracking()
             .Where(x =>
                 x.AssignedOperatorId == operatorTerminal.OperatorId &&
-                x.CompletionType == (byte)JobCompletitionType.Initial)
+                x.CompletionType != (byte)JobCompletitionType.SuccessfullyCompleted)
             .OrderByDescending(x => x.Id)
         .FirstOrDefaultAsync(cancellationToken);
 
