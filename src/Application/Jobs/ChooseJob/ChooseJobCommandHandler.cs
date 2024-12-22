@@ -35,7 +35,7 @@ internal sealed class ChooseJobCommandHandler(
             .AsNoTracking()
             .Where(x =>
                 x.AssignedOperatorId == operatorId &&
-                x.CompletionType == (byte)JobCompletitionType.Initial)
+                x.CompletionType != (byte)JobCompletitionType.SuccessfullyCompleted)
             .Include(x => x.JobsInProgress)
             .OrderByDescending(x => x.Id)
         .FirstOrDefaultAsync(cancellationToken);
