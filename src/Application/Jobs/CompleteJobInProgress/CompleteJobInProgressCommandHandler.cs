@@ -31,7 +31,7 @@ internal sealed class CompleteJobInProgressCommandHandler(IApplicationDbContext 
             return Result.Failure<Result>(JobErrors.JobInProgressAlreadyCompleted);
 
         if (jobInProgress.OperatorTerminalId != operatorTerminalId || jobInProgress.Job.AssignedOperatorId != operatorId)
-            return Result.Failure<Result>(OperatorTerminalErrors.Unauthorized);
+            return Result.Failure<Result>(OperatorTerminalErrors.Forbidden);
 
         jobInProgress.EndDateTime = dateTimeProvider.UtcNow;
 

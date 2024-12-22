@@ -47,7 +47,7 @@ internal sealed class CompleteJobItemCommandHandler(
             return Result.Failure<Result>(JobErrors.AlreadyCompleted);
 
         if (lastAssignedJobInProgress.OperatorTerminalId != operatorTerminalId || lastAssignedJobInProgress.Job.AssignedOperatorId != operatorId)
-            return Result.Failure<Result>(OperatorTerminalErrors.Unauthorized);
+            return Result.Failure<Result>(OperatorTerminalErrors.Forbidden);
 
         jobItem.JobInProgressId = lastAssignedJobInProgress.Id;
         jobItem.ReadedField3 = request.EnteredQuantity;

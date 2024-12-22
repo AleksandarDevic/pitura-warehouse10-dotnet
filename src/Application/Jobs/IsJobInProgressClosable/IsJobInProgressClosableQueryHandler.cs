@@ -30,7 +30,7 @@ internal sealed class IsJobInProgressClosableQueryHandler(IApplicationDbContext 
             return Result.Failure<IsJobInProgressClosableQueryResult>(JobErrors.JobInProgressAlreadyCompleted);
 
         if (jobInProgress.OperatorTerminalId != operatorTerminalId || jobInProgress.Job.AssignedOperatorId != operatorId)
-            return Result.Failure<IsJobInProgressClosableQueryResult>(OperatorTerminalErrors.Unauthorized);
+            return Result.Failure<IsJobInProgressClosableQueryResult>(OperatorTerminalErrors.Forbidden);
 
         var result = new IsJobInProgressClosableQueryResult
         {

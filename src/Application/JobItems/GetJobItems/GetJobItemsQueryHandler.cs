@@ -22,7 +22,7 @@ internal sealed class GetJobItemsQueryHandler(IApplicationDbContext dbContext, I
 
         var operatorId = currentUserService.OperatorId;
         if (job.AssignedOperatorId != operatorId)
-            return Result.Failure<PagedList<JobItemResponse>>(OperatorTerminalErrors.Unauthorized);
+            return Result.Failure<PagedList<JobItemResponse>>(OperatorTerminalErrors.Forbidden);
 
         IQueryable<JobItem> query = dbContext.JobItems
             .AsNoTracking()
