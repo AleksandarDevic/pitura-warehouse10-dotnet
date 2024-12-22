@@ -19,16 +19,17 @@ internal sealed class LogoutCommandHandler(IApplicationDbContext dbContext, IDat
         if (operatorTerminal.LogoutDateTime is not null)
             return Result.Success();
 
-        var lastAssignedJob = await dbContext.Jobs
-            .AsNoTracking()
-            .Where(x =>
-                x.AssignedOperatorId == operatorTerminal.OperatorId &&
-                x.CompletionType != (byte)JobCompletitionType.SuccessfullyCompleted)
-            .OrderByDescending(x => x.Id)
-        .FirstOrDefaultAsync(cancellationToken);
+        // var lastAssignedJob = await dbContext.Jobs
+        //     .AsNoTracking()
+        //     .Where(x =>
+        //         x.AssignedOperatorId == operatorTerminal.OperatorId &&
+        //         x.CompletionType != (byte)JobCompletitionType.SuccessfullyCompleted &&
+        //         x.JobsInProgress.Any(jip => jip.CompletionType == (byte)JobCompletitionType.Initial && jip.OperatorTerminalId == operatorTerminal.Id))
+        //     .OrderByDescending(x => x.Id)
+        // .FirstOrDefaultAsync(cancellationToken);
 
-        if (lastAssignedJob is not null)
-            return Result.Failure<Result>(JobErrors.NotCompleted(lastAssignedJob.Description ?? $"{lastAssignedJob.Id}"));
+        // if (lastAssignedJob is not null)
+        //     return Result.Failure<Result>(JobErrors.NotCompleted(lastAssignedJob.Description ?? $"{lastAssignedJob.Id}"));
 
         operatorTerminal.LogoutDateTime = dateTimeProvider.UtcNow;
 
