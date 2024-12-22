@@ -1,4 +1,5 @@
 using Application.JobItems.CompleteJobItem;
+using Application.JobItems.GetJobItemNotCompleted;
 using Application.JobItems.GetJobItems;
 using Application.Jobs.ChooseJob;
 using Application.Jobs.CompleteJobInProgress;
@@ -90,6 +91,19 @@ public class Job : IEndpoint
         .WithTags(Tags.Job)
         .RequireAuthorization();
 
+        app.MapGet("job-item/{jobItemId}/details", async (
+            ISender sender,
+            [FromRoute] long jobItemId,
+            CancellationToken cancellationToken) =>
+        {
+            var query = new GetJobItemNotCompletedQuery(jobItemId);
+            var result = await sender.Send(query, cancellationToken);
+
+            return result.Match(Results.Ok, CustomResults.Problem);
+        })
+        .WithTags(Tags.Job)
+        .RequireAuthorization();
+
         app.MapPost("job-in-progress/{jobInProgressId}/job-item/{jobItemId}/complete", async (
             ISender sender,
             [FromRoute] long jobInProgressId,
@@ -104,5 +118,6 @@ public class Job : IEndpoint
         })
         .WithTags(Tags.JobInProgress)
         .RequireAuthorization();
+
     }
 }
