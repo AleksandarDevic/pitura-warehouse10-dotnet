@@ -50,7 +50,6 @@ internal sealed class LoginCommandHandler(
                 x.AssignedOperatorId == operatorId &&
                 x.ClosingType == (byte)JobCompletitionType.Initial)
             .Include(x => x.JobsInProgress)
-            .Include(x => x.JobItems)
             .OrderByDescending(x => x.Id)
         .FirstOrDefaultAsync(cancellationToken);
 

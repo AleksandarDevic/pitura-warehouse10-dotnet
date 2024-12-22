@@ -8,6 +8,10 @@ public static class JobErrors
         "Job.NotFound",
         "Job not found.");
 
+    public static Error NotCompleted(string jobDescription) => Error.NotFound(
+        "Job.NotCompleted",
+        $"Job {jobDescription} not completed.");
+
     public static readonly Error JobInProgressNotFound = Error.NotFound(
         "JobInProgress.NotFound",
         "JobInProgress not found.");
