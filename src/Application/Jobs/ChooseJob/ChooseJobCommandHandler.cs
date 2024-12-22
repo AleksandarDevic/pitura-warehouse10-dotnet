@@ -34,6 +34,7 @@ internal sealed class ChooseJobCommandHandler(
         var lastAssignedJob = await dbContext.Jobs
             .AsNoTracking()
             .Where(x =>
+                x.Id == request.JobId &&
                 x.AssignedOperatorId == operatorId &&
                 x.CompletionType != (byte)JobCompletitionType.SuccessfullyCompleted)
             .Include(x => x.JobsInProgress)
