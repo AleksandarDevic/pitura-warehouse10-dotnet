@@ -34,7 +34,6 @@ internal sealed class GetJobItemsQueryHandler(IApplicationDbContext dbContext, I
             query = query.Where(x => x.ItemDescription != null && EF.Functions.Like(x.ItemDescription.ToLower(), $"%{lowerSearchTerm}%"));
         }
 
-
         Expression<Func<JobItem, object?>> keySelector = request.OrderBy switch
         {
             "requiredField1" => jobItem => jobItem.RequiredField1,
@@ -43,7 +42,6 @@ internal sealed class GetJobItemsQueryHandler(IApplicationDbContext dbContext, I
         };
 
         query = request.IsDescending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
-
 
         var jobItemResponsesQuery = query.Select(x => new JobItemResponse
         {

@@ -25,10 +25,26 @@ public static class JobErrors
         "Job has already assigned.");
 
     public static readonly Error AlreadyCompleted = Error.Conflict(
+        "Job.AlreadyCompleted",
+        $"Job has already completed.");
+
+    public static readonly Error JobInProgressAlreadyCompleted = Error.Conflict(
         "JobInProgress.AlreadyCompleted",
         $"JobInProgress has already completed.");
 
     public static readonly Error JobItemsNotReadedWithRequestedQuantity = Error.Conflict(
         "Job.JobItemsNotReadedWithRequestedQuantity",
         "Job Items haven't been read with requested quantity.");
+
+    public static readonly Error JobItemAlreadyReaded = Error.Conflict(
+        "JobItem.AlreadyReaded",
+        "JobItem has already read.");
+
+    public static readonly Error JobItemBadQuanity = Error.Conflict(
+        "JobItem.BadQuanity",
+        "JobItem has bad quantity.");
+
+    public static readonly Error JobItemNotFound = Error.NotFound(
+        "JobItem.NotFound",
+        "JobItem not found.");
 }
