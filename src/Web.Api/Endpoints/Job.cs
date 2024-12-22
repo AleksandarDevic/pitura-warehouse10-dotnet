@@ -97,7 +97,7 @@ public class Job : IEndpoint
             [FromBody] CompleteJobItemRequest request,
             CancellationToken cancellationToken) =>
         {
-            var command = new CompleteJobItemCommand(request.JobInProgressId, request.JobItemId, request.EnteredQuantity, request.Status);
+            var command = new CompleteJobItemCommand(jobInProgressId, jobItemId, request.EnteredQuantity, request.Status);
             var result = await sender.Send(command, cancellationToken);
 
             return result.Match(Results.NoContent, CustomResults.Problem);
