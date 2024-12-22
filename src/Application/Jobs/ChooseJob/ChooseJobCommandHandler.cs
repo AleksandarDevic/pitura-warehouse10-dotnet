@@ -5,13 +5,12 @@ using Domain.Entities;
 using Domain.Enums;
 using Domain.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using SharedKernel;
 
 namespace Application.Jobs.ChooseJob;
 
 internal sealed class ChooseJobCommandHandler(
-    IApplicationDbContext dbContext, ICurrentUserService currentUserService, IDateTimeProvider dateTimeProvider, ILogger<ChooseJobCommandHandler> logger)
+    IApplicationDbContext dbContext, ICurrentUserService currentUserService, IDateTimeProvider dateTimeProvider)
     : ICommandHandler<ChooseJobCommand, JobInProgressResponse>
 {
     public async Task<Result<JobInProgressResponse>> Handle(ChooseJobCommand request, CancellationToken cancellationToken)

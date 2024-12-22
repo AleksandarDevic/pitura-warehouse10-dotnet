@@ -28,7 +28,7 @@ public static class JobErrors
         "JobInProgress.AlreadyCompleted",
         $"JobInProgress has already completed.");
 
-    public static readonly Error JobItemsNotReaded = Error.Conflict(
-        "Job.JobItemsNotReaded",
-        "All Job Items haven't been read.");
+    public static readonly Error JobItemsNotReadedWithRequestedQuantity = Error.Conflict(
+        "Job.JobItemsNotReadedWithRequestedQuantity",
+        "Job Items haven't been read with requested quantity.");
 }

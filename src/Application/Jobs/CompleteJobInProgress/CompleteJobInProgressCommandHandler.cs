@@ -8,7 +8,8 @@ using SharedKernel;
 
 namespace Application.Jobs.CompleteJobInProgress;
 
-internal sealed class CompleteJobInProgressCommandHandler(IApplicationDbContext dbContext, ICurrentUserService currentUserService, IDateTimeProvider dateTimeProvider) : ICommandHandler<CompleteJobInProgressCommand>
+internal sealed class CompleteJobInProgressCommandHandler(IApplicationDbContext dbContext, ICurrentUserService currentUserService, IDateTimeProvider dateTimeProvider)
+    : ICommandHandler<CompleteJobInProgressCommand>
 {
     public async Task<Result> Handle(CompleteJobInProgressCommand request, CancellationToken cancellationToken)
     {
@@ -36,8 +37,8 @@ internal sealed class CompleteJobInProgressCommandHandler(IApplicationDbContext 
 
         if (request.CompletitionType == JobCompletitionType.SuccessfullyCompleted)
         {
-            if (!AllJobItemsHasStatusCompleted(jobInProgress.Job))
-                return Result.Failure<Result>(JobErrors.JobItemsNotReaded);
+            if (!AllJobItemsReadWithRequestedQuantity(jobInProgress.Job))
+                return Result.Failure<Result>(JobErrors.JobItemsNotReadedWithRequestedQuantity);
 
             jobInProgress.Job.CompletedByOperatorName = operatorId.ToString();
         }
@@ -57,6 +58,6 @@ internal sealed class CompleteJobInProgressCommandHandler(IApplicationDbContext 
         return Result.Success();
     }
 
-    private static bool AllJobItemsHasStatusCompleted(Job job) =>
+    private static bool AllJobItemsReadWithRequestedQuantity(Job job) =>
          job.JobItems.All(x => x.ItemStatus == (byte)JobItemStatus.ReadWithRequestedQuantity);
 }
