@@ -52,6 +52,7 @@ internal sealed class GetJobItemsQueryHandler(IApplicationDbContext dbContext, I
             RequiredField2 = x.RequiredField2,
             RequiredField3 = x.RequiredField3,
             JobInProgressId = x.JobInProgressId,
+            ReadedField3 = x.ReadedField3,
             ItemStatus = x.ItemStatus.HasValue ? (JobItemStatus)x.ItemStatus.Value : JobItemStatus.Unread
         });
 
