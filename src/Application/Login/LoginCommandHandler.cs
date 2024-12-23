@@ -67,7 +67,7 @@ internal sealed class LoginCommandHandler(
                 var operatorTerminal = await dbContext.OperatorTerminalSessions
                     .Where(x =>
                         x.Id == lastAssignedJobInProgress.OperatorTerminalId &&
-                        x.LogoutDateTime != null)
+                        x.LogoutDateTime == null)
                 .FirstOrDefaultAsync(cancellationToken);
                 if (operatorTerminal is not null)
                     operatorTerminal.LogoutDateTime = dateTimeNow;
@@ -75,7 +75,7 @@ internal sealed class LoginCommandHandler(
                 var jobInProgress = await dbContext.JobsInProgress
                     .Where(x =>
                         x.Id == lastAssignedJobInProgress.Id &&
-                        x.EndDateTime != null)
+                        x.EndDateTime == null)
                 .FirstOrDefaultAsync(cancellationToken);
                 if (jobInProgress is not null)
                     jobInProgress.EndDateTime = dateTimeNow;
