@@ -62,6 +62,24 @@ internal sealed class LoginCommandHandler(
 
             if (lastAssignedJobInProgress is not null)
             {
+                var dateTimeNow = dateTimeProvider.UtcNow;
+                // Set logout time in OperatorTerminal and JobInProgress if not set.
+                var operatorTerminal = await dbContext.OperatorTerminalSessions
+                    .Where(x =>
+                        x.Id == lastAssignedJobInProgress.OperatorTerminalId &&
+                        x.LogoutDateTime != null)
+                .FirstOrDefaultAsync(cancellationToken);
+                if (operatorTerminal is not null)
+                    operatorTerminal.LogoutDateTime = dateTimeNow;
+
+                var jobInProgress = await dbContext.JobsInProgress
+                    .Where(x =>
+                        x.Id == lastAssignedJobInProgress.Id &&
+                        x.EndDateTime != null)
+                .FirstOrDefaultAsync(cancellationToken);
+                if (jobInProgress is not null)
+                    jobInProgress.EndDateTime = dateTimeNow;
+
                 int currentJobInProgressMaxId = await dbContext.JobsInProgress.MaxAsync(x => x.Id, cancellationToken);
 
                 var newJobInProgress = new JobInProgress
@@ -69,7 +87,7 @@ internal sealed class LoginCommandHandler(
                     Id = currentJobInProgressMaxId + 1,
                     JobId = lastAssignedJobInProgress.JobId,
                     OperatorTerminalId = newOperatorTerminal.Id,
-                    StartDateTime = dateTimeProvider.UtcNow,
+                    StartDateTime = dateTimeNow,
                     EndDateTime = null,
                     CompletionType = (byte)JobCompletitionType.Initial,
                     Note = null
