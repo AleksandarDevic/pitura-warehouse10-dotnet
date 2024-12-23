@@ -44,6 +44,10 @@ public static class JobErrors
         "JobItem.BadQuanity",
         "Stavka posla ima loše unetu količinu.");
 
+    public static readonly Error JobItemRequestedAndReadedValueNotMatch = Error.Conflict(
+        "JobItem.JobItemRequestedAndReadedValueNotMatch",
+        "Stavka posla ima različite očitane vrednosti u odnosu na tražene.");
+
     public static readonly Error JobItemNotFound = Error.NotFound(
         "JobItem.NotFound",
         "Stavka posla nije pronađena.");

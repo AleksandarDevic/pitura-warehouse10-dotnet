@@ -27,7 +27,12 @@ internal sealed class CompleteJobItemCommandHandler(
         if (jobItem.ItemStatus == (byte)JobItemStatus.ReadWithRequestedQuantity)
             return Result.Failure<Result>(JobErrors.JobItemAlreadyReaded);
 
-        if ((request.Status == JobItemStatus.ReadWithRequestedQuantity && request.EnteredQuantity != jobItem.RequiredField3) || request.EnteredQuantity < 0)
+        if (request.RequiredFieldRead1 != jobItem.RequiredField1 ||
+            request.RequiredFieldRead2 != jobItem.RequiredField2 ||
+            request.RequiredFieldRead3 != jobItem.RequiredField3)
+            return Result.Failure<Result>(JobErrors.JobItemRequestedAndReadedValueNotMatch);
+
+        if ((request.Status == JobItemStatus.ReadWithRequestedQuantity && request.RequiredFieldRead3 != jobItem.RequiredField3) || request.RequiredFieldRead3 < 0)
             return Result.Failure<Result>(JobErrors.JobItemBadQuanity);
 
         var lastAssignedJobInProgress = await dbContext.JobsInProgress
@@ -50,7 +55,7 @@ internal sealed class CompleteJobItemCommandHandler(
             return Result.Failure<Result>(OperatorTerminalErrors.Forbidden);
 
         jobItem.JobInProgressId = lastAssignedJobInProgress.Id;
-        jobItem.ReadedField3 = request.EnteredQuantity;
+        jobItem.ReadedField3 = request.RequiredFieldRead3;
         jobItem.ItemStatus = (byte)request.Status;
 
         await dbContext.SaveChangesAsync(cancellationToken);
