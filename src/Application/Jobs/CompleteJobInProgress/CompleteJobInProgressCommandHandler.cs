@@ -45,7 +45,6 @@ internal sealed class CompleteJobInProgressCommandHandler(IApplicationDbContext 
         else
         {
             jobInProgress.Job.AssignedOperatorId = null;
-            // jobInProgress.Job.CompletionType = (byte)JobCompletitionType.Initial;
         }
 
         jobInProgress.CompletionType = (byte)request.CompletitionType;
