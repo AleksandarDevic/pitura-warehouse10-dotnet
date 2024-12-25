@@ -44,7 +44,7 @@ internal sealed class LoginCommandHandler(
 
         await dbContext.OperatorTerminalSessions.AddAsync(newOperatorTerminal, cancellationToken);
 
-        var lastAssignedJobNotCompleted = await dbContext.Jobs
+        var lastAssignedJobInProgress = await dbContext.Jobs
             .AsNoTracking()
             .Where(x =>
                 x.AssignedOperatorId == operatorId &&
@@ -62,22 +62,23 @@ internal sealed class LoginCommandHandler(
             })
         .FirstOrDefaultAsync(cancellationToken);
 
-        var job = lastAssignedJobNotCompleted?.Job;
-        var jobInProgress = lastAssignedJobNotCompleted?.JobInProgress;
+        var assignedJob = lastAssignedJobInProgress?.Job;
+        var assignedJobInProgress = lastAssignedJobInProgress?.JobInProgress;
 
         var dateTimeNow = dateTimeProvider.UtcNow;
 
-        if (job is not null && jobInProgress is not null)
+        if (assignedJob is not null && assignedJobInProgress is not null)
         {
-            logger.LogInformation("JobInProgressId: {JobInProgressId} realated to JobId: {JobId} and OperatorId: {OperatorId} didn't completed in past, OperatorTerminalId: {OperatorTerminalId}.", jobInProgress.Id, job.Id, operatorId, jobInProgress.OperatorTerminalId);
+            logger.LogWarning("JobInProgressId: {JobInProgressId} realated to JobId: {JobId} and OperatorId: {OperatorId} didn't completed in past by OperatorTerminalId: {OperatorTerminalId}, but now ended with new login by NewOperatorTerminalId: {NewOperatorTerminalId}.", assignedJobInProgress.Id, assignedJob.Id, operatorId, assignedJobInProgress.OperatorTerminalId, newOperatorTerminal.Id);
 
-            var jobInProgressDb = await dbContext.JobsInProgress.FirstAsync(x => x.Id == jobInProgress.Id, cancellationToken);
-            jobInProgressDb.EndDateTime = dateTimeNow;
+            var assignedJobInProgressDb = await dbContext.JobsInProgress.FirstAsync(x => x.Id == assignedJobInProgress.Id, cancellationToken);
+            assignedJobInProgressDb.EndDateTime = dateTimeNow;
+            assignedJobInProgressDb.Note = $"Ended with new login by OperatorTerminalId: {newOperatorTerminal.Id}.";
 
             // Set logout time in OperatorTerminal and JobInProgress if not set.
             var operatorTerminalDb = await dbContext.OperatorTerminalSessions
                 .Where(x =>
-                    x.Id == jobInProgressDb.OperatorTerminalId &&
+                    x.Id == assignedJobInProgressDb.OperatorTerminalId &&
                     x.LogoutDateTime == null)
             .FirstOrDefaultAsync(cancellationToken);
             if (operatorTerminalDb is not null)
@@ -88,7 +89,7 @@ internal sealed class LoginCommandHandler(
             var newJobInProgress = new JobInProgress
             {
                 Id = currentJobInProgressMaxId + 1,
-                JobId = jobInProgressDb.JobId,
+                JobId = assignedJobInProgressDb.JobId,
                 OperatorTerminalId = newOperatorTerminal.Id,
                 StartDateTime = dateTimeNow,
                 EndDateTime = null,
