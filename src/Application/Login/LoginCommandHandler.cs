@@ -44,57 +44,59 @@ internal sealed class LoginCommandHandler(
 
         await dbContext.OperatorTerminalSessions.AddAsync(newOperatorTerminal, cancellationToken);
 
-        var lastAssignedJob = await dbContext.Jobs
+        var lastAssignedJobNotCompleted = await dbContext.Jobs
             .AsNoTracking()
             .Where(x =>
                 x.AssignedOperatorId == operatorId &&
-                x.CompletionType != (byte)JobCompletitionType.SuccessfullyCompleted)
+                x.CompletionType != (byte)JobCompletitionType.SuccessfullyCompleted &&
+                x.JobsInProgress.Any(jip => jip.CompletionType == (byte)JobCompletitionType.Initial && jip.EndDateTime == null))
             .Include(x => x.JobsInProgress)
             .OrderByDescending(x => x.Id)
+            .Select(x => new
+            {
+                Job = x,
+                JobInProgress = x.JobsInProgress
+                    .Where(jip => jip.CompletionType == (byte)JobCompletitionType.Initial && jip.EndDateTime == null)
+                    .OrderByDescending(jip => jip.Id)
+                .FirstOrDefault()
+            })
         .FirstOrDefaultAsync(cancellationToken);
 
-        if (lastAssignedJob is not null)
+        var job = lastAssignedJobNotCompleted?.Job;
+        var jobInProgress = lastAssignedJobNotCompleted?.JobInProgress;
+
+        var dateTimeNow = dateTimeProvider.UtcNow;
+
+        if (job is not null && jobInProgress is not null)
         {
-            var lastAssignedJobInProgress = lastAssignedJob.JobsInProgress
-                .Where(x => x.CompletionType == (byte)JobCompletitionType.Initial)
-                .OrderByDescending(x => x.Id)
-            .FirstOrDefault();
+            logger.LogInformation("JobInProgressId: {JobInProgressId} realated to JobId: {JobId} and OperatorId: {OperatorId} didn't completed in past, OperatorTerminalId: {OperatorTerminalId}.", jobInProgress.Id, job.Id, operatorId, jobInProgress.OperatorTerminalId);
 
-            if (lastAssignedJobInProgress is not null)
+            var jobInProgressDb = await dbContext.JobsInProgress.FirstAsync(x => x.Id == jobInProgress.Id, cancellationToken);
+            jobInProgressDb.EndDateTime = dateTimeNow;
+
+            // Set logout time in OperatorTerminal and JobInProgress if not set.
+            var operatorTerminalDb = await dbContext.OperatorTerminalSessions
+                .Where(x =>
+                    x.Id == jobInProgressDb.OperatorTerminalId &&
+                    x.LogoutDateTime == null)
+            .FirstOrDefaultAsync(cancellationToken);
+            if (operatorTerminalDb is not null)
+                operatorTerminalDb.LogoutDateTime = dateTimeNow;
+
+            int currentJobInProgressMaxId = await dbContext.JobsInProgress.MaxAsync(x => x.Id, cancellationToken);
+
+            var newJobInProgress = new JobInProgress
             {
-                var dateTimeNow = dateTimeProvider.UtcNow;
-                // Set logout time in OperatorTerminal and JobInProgress if not set.
-                var operatorTerminal = await dbContext.OperatorTerminalSessions
-                    .Where(x =>
-                        x.Id == lastAssignedJobInProgress.OperatorTerminalId &&
-                        x.LogoutDateTime == null)
-                .FirstOrDefaultAsync(cancellationToken);
-                if (operatorTerminal is not null)
-                    operatorTerminal.LogoutDateTime = dateTimeNow;
+                Id = currentJobInProgressMaxId + 1,
+                JobId = jobInProgressDb.JobId,
+                OperatorTerminalId = newOperatorTerminal.Id,
+                StartDateTime = dateTimeNow,
+                EndDateTime = null,
+                CompletionType = (byte)JobCompletitionType.Initial,
+                Note = null
+            };
 
-                var jobInProgress = await dbContext.JobsInProgress
-                    .Where(x =>
-                        x.Id == lastAssignedJobInProgress.Id &&
-                        x.EndDateTime == null)
-                .FirstOrDefaultAsync(cancellationToken);
-                if (jobInProgress is not null)
-                    jobInProgress.EndDateTime = dateTimeNow;
-
-                int currentJobInProgressMaxId = await dbContext.JobsInProgress.MaxAsync(x => x.Id, cancellationToken);
-
-                var newJobInProgress = new JobInProgress
-                {
-                    Id = currentJobInProgressMaxId + 1,
-                    JobId = lastAssignedJobInProgress.JobId,
-                    OperatorTerminalId = newOperatorTerminal.Id,
-                    StartDateTime = dateTimeNow,
-                    EndDateTime = null,
-                    CompletionType = (byte)JobCompletitionType.Initial,
-                    Note = null
-                };
-
-                await dbContext.JobsInProgress.AddAsync(newJobInProgress, cancellationToken);
-            }
+            await dbContext.JobsInProgress.AddAsync(newJobInProgress, cancellationToken);
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
