@@ -17,14 +17,30 @@ internal sealed class OperatorTerminalLogoutJob(
     {
         logger.LogInformation("Logout process for OperatorTerminal start");
 
-        var sessionsForLogout = await applicationDbContext.OperatorTerminalSessions.Where(x => x.LogoutDateTime == null).ToListAsync(context.CancellationToken);
-        foreach (var session in sessionsForLogout)
-        {
-            session.LogoutDateTime = dateTimeProvider.UtcNow;
-            logger.LogWarning("LogoutDateTime set for OperatorTerminalId: {OperatorTerminalId}", session.Id);
-        }
+        var sessionsForLogout = await applicationDbContext.OperatorTerminalSessions
+            .Where(x => x.LogoutDateTime == null)
+            .Include(x => x.JobsInProgess)
+        .ToListAsync(context.CancellationToken);
 
-        await applicationDbContext.SaveChangesAsync(context.CancellationToken);
+        if (sessionsForLogout.Count > 0)
+        {
+            var dateTimeNow = dateTimeProvider.UtcNow;
+
+            foreach (var session in sessionsForLogout)
+            {
+                session.LogoutDateTime = dateTimeNow;
+                logger.LogWarning("LogoutDateTime set by background-job for OperatorTerminalId: {OperatorTerminalId}.", session.Id);
+                var jobsInProgressForSession = session.JobsInProgess.Where(x => x.EndDateTime == null).ToList();
+                foreach (var jobInProgress in jobsInProgressForSession)
+                {
+                    jobInProgress.EndDateTime = dateTimeNow;
+                    jobInProgress.Note = "Ended with background-job.";
+                    logger.LogWarning("LogoutDateTime set by background-job for JobInProgressId: {JobInProgressId} and OperatorTerminalId: {OperatorTerminalId}.", jobInProgress.Id, jobInProgress.OperatorTerminalId);
+                }
+            }
+
+            await applicationDbContext.SaveChangesAsync(context.CancellationToken);
+        }
 
         logger.LogInformation("Logout process for OperatorTerminal finish");
     }
