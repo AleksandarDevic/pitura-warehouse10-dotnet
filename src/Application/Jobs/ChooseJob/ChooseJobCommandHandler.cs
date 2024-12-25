@@ -31,29 +31,29 @@ internal sealed class ChooseJobCommandHandler(
         if (job.AssignedOperatorId is not null && job.AssignedOperatorId != operatorId)
             return Result.Failure<JobInProgressResponse>(JobErrors.AlreadyAssigned);
 
-        var lastAssignedJob = await dbContext.Jobs
+        var lastAssignedJobInProgress = await dbContext.Jobs
             .AsNoTracking()
             .Where(x =>
                 x.Id == request.JobId &&
                 x.AssignedOperatorId == operatorId &&
-                x.JobsInProgress.Any(jip => jip.CompletionType == (byte)JobCompletitionType.Initial && jip.OperatorTerminalId == operatorTerminalId))
+                x.CompletionType != (byte)JobCompletitionType.SuccessfullyCompleted &&
+                // x.JobsInProgress.Any(jip => jip.CompletionType == (byte)JobCompletitionType.Initial && jip.OperatorTerminalId == operatorTerminalId))
+                x.JobsInProgress.Any(jip => jip.CompletionType == (byte)JobCompletitionType.Initial && jip.EndDateTime == null && jip.OperatorTerminalId == operatorTerminalId))
             .Include(x => x.JobsInProgress)
             .OrderByDescending(x => x.Id)
+            .Select(x => new
+            {
+                Job = x,
+                JobInProgress = x.JobsInProgress
+                    // .Where(jip => jip.CompletionType == (byte)JobCompletitionType.Initial && jip.OperatorTerminalId == operatorTerminalId)
+                    .Where(jip => jip.CompletionType == (byte)JobCompletitionType.Initial && jip.EndDateTime == null && jip.OperatorTerminalId == operatorTerminalId)
+                    .OrderByDescending(jip => jip.Id)
+                .FirstOrDefault()
+            })
         .FirstOrDefaultAsync(cancellationToken);
 
-        if (lastAssignedJob is not null)
-        {
-            if (job.Id != lastAssignedJob.Id)
-                return Result.Failure<JobInProgressResponse>(JobErrors.NotCompleted(lastAssignedJob.Description ?? $"{lastAssignedJob.Id}"));
-
-            var lastAssignedJobInProgress = lastAssignedJob.JobsInProgress
-                .Where(x => x.CompletionType == (byte)JobCompletitionType.Initial && x.OperatorTerminalId == operatorTerminalId)
-                .OrderByDescending(x => x.Id)
-            .FirstOrDefault();
-
-            if (lastAssignedJobInProgress is not null)
-                return Result.Failure<JobInProgressResponse>(JobErrors.NotCompleted(lastAssignedJob.Description ?? $"{lastAssignedJob.Id}"));
-        }
+        if (lastAssignedJobInProgress is not null && lastAssignedJobInProgress.JobInProgress is not null)
+            return Result.Failure<JobInProgressResponse>(JobErrors.NotCompleted(lastAssignedJobInProgress.Job.Description ?? $"{lastAssignedJobInProgress.Job.Id}"));
 
         job.TakenOverByOperatorName ??= operatorId.ToString();
 
