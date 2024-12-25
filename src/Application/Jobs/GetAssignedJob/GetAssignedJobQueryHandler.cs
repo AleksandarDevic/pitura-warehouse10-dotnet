@@ -17,31 +17,31 @@ internal sealed class GetAssignedJobQueryHandler(ICurrentUserService currentUser
         var operatorId = currentUserService.OperatorId;
         var operatorTerminalId = currentUserService.OperatorTerminalId;
 
-        var lastAssignedJob = await dbContext.Jobs
+        var lastAssignedJobInProgress = await dbContext.Jobs
             .AsNoTracking()
             .Where(x =>
                 x.AssignedOperatorId == operatorId &&
                 x.CompletionType != (byte)JobCompletitionType.SuccessfullyCompleted &&
-                x.JobsInProgress.Any(jip => jip.CompletionType == (byte)JobCompletitionType.Initial && jip.OperatorTerminalId == operatorTerminalId))
+                x.JobsInProgress.Any(jip => jip.CompletionType == (byte)JobCompletitionType.Initial && jip.EndDateTime == null && jip.OperatorTerminalId == operatorTerminalId))
             .Include(x => x.JobsInProgress)
             .OrderByDescending(x => x.Id)
+            .Select(x => new
+            {
+                Job = x,
+                JobInProgress = x.JobsInProgress
+                    .Where(jip => jip.CompletionType == (byte)JobCompletitionType.Initial && jip.EndDateTime == null && jip.OperatorTerminalId == operatorTerminalId)
+                    .OrderByDescending(jip => jip.Id)
+                .FirstOrDefault()
+            })
         .FirstOrDefaultAsync(cancellationToken);
 
-        if (lastAssignedJob is null)
-            return Result.Failure<JobInProgressResponse>(JobErrors.JobInProgressNotFound);
-
-        var lastAssignedJobInProgress = lastAssignedJob.JobsInProgress
-            .Where(x => x.CompletionType == (byte)JobCompletitionType.Initial && x.OperatorTerminalId == operatorTerminalId)
-            .OrderByDescending(x => x.Id)
-        .FirstOrDefault();
-
-        if (lastAssignedJobInProgress is null)
+        if (lastAssignedJobInProgress is null || lastAssignedJobInProgress.Job is null || lastAssignedJobInProgress.JobInProgress is null)
             return Result.Failure<JobInProgressResponse>(JobErrors.JobInProgressNotFound);
 
         var jobInProgressResponse = new JobInProgressResponse
         {
-            Id = lastAssignedJobInProgress.Id,
-            JobId = lastAssignedJobInProgress.JobId,
+            Id = lastAssignedJobInProgress.JobInProgress.Id,
+            JobId = lastAssignedJobInProgress.Job.Id,
             Job = new JobResponse
             {
                 Id = lastAssignedJobInProgress.Job.Id,
@@ -56,11 +56,11 @@ internal sealed class GetAssignedJobQueryHandler(ICurrentUserService currentUser
                 IsVerified = lastAssignedJobInProgress.Job.IsVerified,
                 Client = lastAssignedJobInProgress.Job.Client
             },
-            OperatorTerminalId = lastAssignedJobInProgress.OperatorTerminalId,
-            StartDateTime = lastAssignedJobInProgress.StartDateTime,
-            EndDateTime = lastAssignedJobInProgress.EndDateTime,
-            CompletionType = (JobCompletitionType)lastAssignedJobInProgress.CompletionType,
-            Note = lastAssignedJobInProgress.Note
+            OperatorTerminalId = lastAssignedJobInProgress.JobInProgress.OperatorTerminalId,
+            StartDateTime = lastAssignedJobInProgress.JobInProgress.StartDateTime,
+            EndDateTime = lastAssignedJobInProgress.JobInProgress.EndDateTime,
+            CompletionType = (JobCompletitionType)lastAssignedJobInProgress.JobInProgress.CompletionType,
+            Note = lastAssignedJobInProgress.JobInProgress.Note
         };
 
         return jobInProgressResponse;

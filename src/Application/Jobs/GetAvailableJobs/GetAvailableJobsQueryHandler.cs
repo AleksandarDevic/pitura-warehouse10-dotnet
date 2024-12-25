@@ -17,6 +17,7 @@ internal sealed class GetAvailableJobsQueryHandler(IApplicationDbContext dbConte
     public async Task<Result<PagedList<JobResponse>>> Handle(GetAvailableJobsQuery request, CancellationToken cancellationToken)
     {
         var operatorId = currentUserService.OperatorId;
+
         IQueryable<Job> query = dbContext.Jobs
             .AsNoTracking()
             .Where(x =>
@@ -38,7 +39,6 @@ internal sealed class GetAvailableJobsQueryHandler(IApplicationDbContext dbConte
         };
 
         query = request.IsDescending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
-
 
         var jobResponsesQuery = query.Select(x => new JobResponse
         {
