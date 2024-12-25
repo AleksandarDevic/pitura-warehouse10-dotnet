@@ -1,5 +1,8 @@
 # Warehouse10-Pitura App
 
+# Prerequisite for first deployment:
+    - Set 'logout' time in tables: OperatorTerminal and JobInProgress where it is null. Call endpoint for that using Swagger.
+    
 # Deployment:
     - cd cd .\src\Web.Api\
     - dotnet publish -c Release -o ./publish
