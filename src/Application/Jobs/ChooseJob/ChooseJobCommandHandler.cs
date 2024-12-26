@@ -66,7 +66,7 @@ internal sealed class ChooseJobCommandHandler(
             Id = currentMaxId + 1,
             JobId = job.Id,
             OperatorTerminalId = operatorTerminalId,
-            StartDateTime = dateTimeProvider.UtcNow,
+            StartDateTime = dateTimeProvider.Now,
             EndDateTime = null,
             CompletionType = (byte)JobCompletitionType.Initial,
             Note = null

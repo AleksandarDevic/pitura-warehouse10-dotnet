@@ -33,7 +33,7 @@ internal sealed class CompleteJobInProgressCommandHandler(IApplicationDbContext 
         if (jobInProgress.OperatorTerminalId != operatorTerminalId || jobInProgress.Job.AssignedOperatorId != operatorId)
             return Result.Failure<Result>(OperatorTerminalErrors.Forbidden);
 
-        jobInProgress.EndDateTime = dateTimeProvider.UtcNow;
+        jobInProgress.EndDateTime = dateTimeProvider.Now;
 
         if (request.CompletitionType == JobCompletitionType.SuccessfullyCompleted)
         {

@@ -31,7 +31,7 @@ public class JwtProvider(IDateTimeProvider dateTimeProvider, IOptions<JwtOptions
                new Claim(claimTypeTerminal, $"{operatorTerminal.TerminalId}"),
                new Claim(claimTypeOperator, $"{operatorTerminal.OperatorId}"),
             ]),
-            Expires = dateTimeProvider.UtcNow.AddMinutes(_options.AccessTokenExpirationInMinutes),
+            Expires = dateTimeProvider.Now.AddMinutes(_options.AccessTokenExpirationInMinutes),
             SigningCredentials = credentials,
             Issuer = _options.Issuer,
             Audience = _options.Audience

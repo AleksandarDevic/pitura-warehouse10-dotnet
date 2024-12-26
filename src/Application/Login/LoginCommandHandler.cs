@@ -39,7 +39,7 @@ internal sealed class LoginCommandHandler(
             Id = currentOperatorTerminalMaxId + 1,
             OperatorId = operatorId,
             TerminalId = terminalId,
-            LoginDateTime = dateTimeProvider.UtcNow
+            LoginDateTime = dateTimeProvider.Now
         };
 
         await dbContext.OperatorTerminalSessions.AddAsync(newOperatorTerminal, cancellationToken);
@@ -65,7 +65,7 @@ internal sealed class LoginCommandHandler(
         var assignedJob = lastAssignedJobInProgress?.Job;
         var assignedJobInProgress = lastAssignedJobInProgress?.JobInProgress;
 
-        var dateTimeNow = dateTimeProvider.UtcNow;
+        var dateTimeNow = dateTimeProvider.Now;
 
         if (assignedJob is not null && assignedJobInProgress is not null)
         {

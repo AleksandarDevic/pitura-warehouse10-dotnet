@@ -24,7 +24,7 @@ internal sealed class OperatorTerminalLogoutJob(
 
         if (sessionsForLogout.Count > 0)
         {
-            var dateTimeNow = dateTimeProvider.UtcNow;
+            var dateTimeNow = dateTimeProvider.Now;
 
             foreach (var session in sessionsForLogout)
             {
