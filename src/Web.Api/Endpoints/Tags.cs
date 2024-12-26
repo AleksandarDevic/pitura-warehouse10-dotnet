@@ -7,4 +7,5 @@ public static class Tags
     public const string Terminal = "Terminal";
     public const string Job = "Job";
     public const string JobInProgress = "JobInProgress";
+    public const string Admin = "Admin";
 }

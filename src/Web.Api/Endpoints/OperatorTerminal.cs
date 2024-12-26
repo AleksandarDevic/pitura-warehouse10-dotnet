@@ -1,3 +1,4 @@
+using Application.Admin.LogoutJob;
 using Application.Login;
 using Application.Logout;
 using Application.OperatorTerminals.GetActiveTerminals;
@@ -18,6 +19,17 @@ public class OperatorTerminal : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
+        app.MapPost("admin/prerequisite/set-logout-time-to-tables", async (
+            [FromBody] LogoutJobCommand command,
+            ISender sender,
+            CancellationToken cancellationToken) =>
+        {
+            var result = await sender.Send(command, cancellationToken);
+
+            return result.Match(Results.NoContent, CustomResults.Problem);
+        })
+        .WithTags(Tags.Admin);
+
         app.MapGet("terminal/all", async (
             ISender sender,
             CancellationToken cancellationToken) =>
