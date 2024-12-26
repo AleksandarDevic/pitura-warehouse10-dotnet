@@ -2,15 +2,21 @@ using Application.Abstractions.Data;
 using Application.Abstractions.Messaging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using SharedKernel;
 
 namespace Application.Admin.LogoutJob;
 
-internal sealed class LogoutJobCommandHandler(IApplicationDbContext dbContext, IDateTimeProvider dateTimeProvider, ILogger<LogoutJobCommandHandler> logger) : ICommandHandler<LogoutJobCommand>
+internal sealed class LogoutJobCommandHandler(
+    IApplicationDbContext dbContext,
+    IDateTimeProvider dateTimeProvider,
+    IOptions<AdminCredentialsOptions> options,
+    ILogger<LogoutJobCommandHandler> logger) : ICommandHandler<LogoutJobCommand>
 {
+    private readonly AdminCredentialsOptions adminCredentials = options.Value;
     public async Task<Result> Handle(LogoutJobCommand request, CancellationToken cancellationToken)
     {
-        if (request.Password != "root.123")
+        if (request.Password != adminCredentials.Secret)
             return Result.Failure<Result>(Error.Unauthorized("LogoutJob.Unauthorized", "Bad credentials."));
 
         logger.LogInformation("Job for 'Logout process' start");

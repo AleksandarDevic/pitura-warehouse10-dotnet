@@ -2,6 +2,7 @@
 using System.Text;
 using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
+using Application.Admin.LogoutJob;
 using Infrastructure.Authentication.Jwt;
 using Infrastructure.BackgroundJobs.Logout;
 using Infrastructure.Database;
@@ -26,7 +27,7 @@ public static class DependencyInjection
            .AddDatabase(configuration)
            .AddAuth(configuration)
            .AddHealthChecks(configuration)
-           .AddBackgroundJobs();
+           .AddBackgroundJobs(configuration);
 
     private static IServiceCollection AddServices(this IServiceCollection services)
     {
@@ -88,13 +89,15 @@ public static class DependencyInjection
         return services;
     }
 
-    private static IServiceCollection AddBackgroundJobs(this IServiceCollection services)
+    private static IServiceCollection AddBackgroundJobs(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddQuartz();
 
         services.AddQuartzHostedService(options => options.WaitForJobsToComplete = true);
 
         services.ConfigureOptions<OperatorTerminalLogoutJobSetup>();
+
+        services.Configure<AdminCredentialsOptions>(configuration.GetSection(AdminCredentialsOptions.SectionName));
 
         return services;
     }
