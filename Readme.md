@@ -9,7 +9,8 @@
     <!-- - dotnet publish -c Release -o ./publish /p:EnvironmentName=Production -->
     -IIS:
         -PhysicalPath: C:\inetpub\wwwroot\Warehouse10-BE
-        -Port: 5079
+        -Type: https
+        -Port:  7230
         -ApplicationPool: No Managed Code
     
 
