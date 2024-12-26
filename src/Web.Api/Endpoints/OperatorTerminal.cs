@@ -19,7 +19,7 @@ public class OperatorTerminal : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.MapPost("admin/prerequisite/set-logout-time-to-tables", async (
+        app.MapPost("admin/prerequisite/logout-job", async (
             [FromBody] LogoutJobCommand command,
             ISender sender,
             CancellationToken cancellationToken) =>
