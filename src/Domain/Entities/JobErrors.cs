@@ -8,7 +8,7 @@ public static class JobErrors
         "Job.NotFound",
         "Posao nije pronađen.");
 
-    public static Error NotCompleted(string jobDescription) => Error.NotFound(
+    public static Error NotCompleted(string jobDescription) => Error.Conflict(
         "Job.NotCompleted",
         $"Posao {jobDescription} nije završen.");
 
