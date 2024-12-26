@@ -3,12 +3,11 @@ using Application.Abstractions.Messaging;
 using Domain.Entities;
 using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using SharedKernel;
 
 namespace Application.Logout;
 
-internal sealed class LogoutCommandHandler(IApplicationDbContext dbContext, IDateTimeProvider dateTimeProvider, ILogger<LogoutCommandHandler> logger) : ICommandHandler<LogoutCommand>
+internal sealed class LogoutCommandHandler(IApplicationDbContext dbContext, IDateTimeProvider dateTimeProvider) : ICommandHandler<LogoutCommand>
 {
     public async Task<Result> Handle(LogoutCommand request, CancellationToken cancellationToken)
     {
