@@ -24,24 +24,19 @@ internal sealed class GetJobItemsQueryHandler(IApplicationDbContext dbContext, I
         if (job.AssignedOperatorId != operatorId)
             return Result.Failure<PagedList<JobItemResponse>>(OperatorTerminalErrors.Forbidden);
 
-        IQueryable<JobItem> query = dbContext.JobItems
+        var query = dbContext.JobItems
             .AsNoTracking()
             .Where(x => x.JobId == request.JobId);
 
         if (!string.IsNullOrEmpty(request.SearchTerm))
         {
             var lowerSearchTerm = request.SearchTerm.ToLower();
-            query = query.Where(x => x.ItemDescription != null && EF.Functions.Like(x.ItemDescription.ToLower(), $"%{lowerSearchTerm}%"));
+            query = query.Where(x =>
+                !string.IsNullOrEmpty(x.ItemDescription) &&
+                EF.Functions.Like(x.ItemDescription.ToLower(), $"%{lowerSearchTerm}%"));
         }
 
-        Expression<Func<JobItem, object?>> keySelector = request.OrderBy switch
-        {
-            "requiredField1" => jobItem => jobItem.RequiredField1,
-            "requiredField2" => jobItem => jobItem.RequiredField2,
-            _ => jobItem => jobItem.ItemDescription
-        };
-
-        query = request.IsDescending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
+        query = ApplySorting(query, request);
 
         var jobItemResponsesQuery = query.Select(x => new JobItemResponse
         {
@@ -59,5 +54,40 @@ internal sealed class GetJobItemsQueryHandler(IApplicationDbContext dbContext, I
         var result = await jobItemResponsesQuery.ToPagedListAsync(request.PageNumber, request.PageSize, cancellationToken);
 
         return result;
+    }
+
+    private IQueryable<JobItem> ApplySorting(IQueryable<JobItem> query, GetJobItemsQuery request)
+    {
+        // Custom sorting for ItemStatus (Items with ItemStatus == 1 go to the end)
+        Expression<Func<JobItem, int>> statusOrderSelector = jobItem =>
+            jobItem.ItemStatus == 1 ? 1 : 0;
+
+        // Custom sorting logic for RequiredField1
+        Expression<Func<JobItem, int>> customOrderSelector = jobItem =>
+            jobItem.RequiredField1 == null ? 5 : // Assign lowest priority to null values
+            jobItem.RequiredField1.StartsWith("6D") ? 1 :
+            jobItem.RequiredField1.StartsWith("6S") ? 2 :
+            jobItem.RequiredField1.StartsWith("6L") ? 3 : 4;
+
+        // Apply primary sorting (ItemStatus and custom order)
+        var orderedQuery = request.IsDescending
+            ? query.OrderBy(statusOrderSelector).ThenByDescending(customOrderSelector) :
+            query.OrderBy(statusOrderSelector).ThenBy(customOrderSelector);
+
+        return orderedQuery;
+
+        // // Standard sorting logic for other fields
+        // Expression<Func<JobItem, object?>> keySelector = request.OrderBy switch
+        // {
+        //     "ItemDescription" => jobItem => jobItem.ItemDescription,
+        //     "requiredField1" => jobItem => jobItem.RequiredField1,
+        //     "requiredField2" => jobItem => jobItem.RequiredField2,
+        //     _ => jobItem => jobItem.ItemDescription
+        // };
+
+        // // Apply secondary sorting (dynamic field and direction)
+        // return request.IsDescending
+        //     ? orderedQuery.ThenByDescending(keySelector)
+        //     : orderedQuery.ThenBy(keySelector);
     }
 }
