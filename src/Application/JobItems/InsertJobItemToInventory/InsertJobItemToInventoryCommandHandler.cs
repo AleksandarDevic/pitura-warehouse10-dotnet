@@ -31,6 +31,9 @@ internal sealed class InsertJobItemToInventoryCommandHandler(
         if (jobInProgress.CompletionType == (byte)JobCompletitionType.SuccessfullyCompleted)
             return Result.Failure<JobItemResponse>(JobErrors.JobInProgressAlreadyCompleted);
 
+        if (jobInProgress.Job.CompletionType == (byte)JobCompletitionType.SuccessfullyCompleted)
+            return Result.Failure<JobItemResponse>(JobErrors.AlreadyCompleted);
+
         if (jobInProgress.OperatorTerminalId != operatorTerminalId || jobInProgress.Job.AssignedOperatorId != operatorId)
             return Result.Failure<JobItemResponse>(OperatorTerminalErrors.Forbidden);
 
@@ -61,11 +64,11 @@ internal sealed class InsertJobItemToInventoryCommandHandler(
         }
         else
         {
-            long currentJobItemMaxId = await dbContext.JobItems.MaxAsync(x => x.Id, cancellationToken);
+            // long currentJobItemMaxId = await dbContext.JobItems.MaxAsync(x => x.Id, cancellationToken);
 
             var newJobItem = new JobItem
             {
-                Id = currentJobItemMaxId + 1,
+                // Id = currentJobItemMaxId + 1,
                 JobId = jobInProgress.JobId,
                 ItemDescription = string.Empty,
                 RequiredField1 = request.ReadedField1,
