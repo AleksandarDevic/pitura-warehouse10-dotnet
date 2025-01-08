@@ -1,6 +1,7 @@
 using Application.JobItems.CompleteJobItem;
 using Application.JobItems.GetJobItemNotCompleted;
 using Application.JobItems.GetJobItems;
+using Application.JobItems.InsertJobItemToInventory;
 using Application.Jobs.ChooseJob;
 using Application.Jobs.CompleteJobInProgress;
 using Application.Jobs.GetAssignedJob;
@@ -116,6 +117,20 @@ public class Job : IEndpoint
             return result.Match(Results.Ok, CustomResults.Problem);
         })
         .WithTags(Tags.Job)
+        .RequireAuthorization();
+
+        app.MapPost("job-in-progress/{jobInProgressId}/job-item/insert-to-inventory", async (
+            ISender sender,
+            [FromRoute] long jobInProgressId,
+            [FromBody] InsertJobItemToInventoryRequest request,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new InsertJobItemToInventoryCommand(jobInProgressId, request.ReadedField1, request.ReadedField2, request.ReadedField3);
+            var result = await sender.Send(command, cancellationToken);
+
+            return result.Match(Results.Ok, CustomResults.Problem);
+        })
+        .WithTags(Tags.JobInProgress)
         .RequireAuthorization();
 
         app.MapPost("job-in-progress/{jobInProgressId}/job-item/{jobItemId}/complete", async (
