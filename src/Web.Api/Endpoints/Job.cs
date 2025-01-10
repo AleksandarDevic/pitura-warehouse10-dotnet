@@ -125,7 +125,7 @@ public class Job : IEndpoint
             [FromBody] InsertJobItemToInventoryRequest request,
             CancellationToken cancellationToken) =>
         {
-            var command = new InsertJobItemToInventoryCommand(jobInProgressId, request.ReadedField1, request.ReadedField2, request.ReadedField3);
+            var command = new InsertJobItemToInventoryCommand(jobInProgressId, request.RequiredFieldRead1, request.RequiredFieldRead2, request.RequiredFieldRead3);
             var result = await sender.Send(command, cancellationToken);
 
             return result.Match(Results.Ok, CustomResults.Problem);
