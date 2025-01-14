@@ -5,6 +5,7 @@ using Domain.Entities;
 using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel;
+using SharedKernel.Extensions;
 
 namespace Application.JobItems.CompleteJobItem;
 
@@ -27,39 +28,56 @@ internal sealed class CompleteJobItemCommandHandler(
         if (jobItem.ItemStatus == (byte)JobItemStatus.ReadWithRequestedQuantity)
             return Result.Failure<Result>(JobErrors.JobItemAlreadyReaded);
 
-        if (request.RequiredFieldRead1 != jobItem.RequiredField1 ||
-            request.RequiredFieldRead2 != jobItem.RequiredField2 ||
-            request.RequiredFieldRead3 != jobItem.RequiredField3)
+        if (!IsJobItemEligibleForCompletion(jobItem, request))
             return Result.Failure<Result>(JobErrors.JobItemRequestedAndReadedValueNotMatch);
 
-        if ((request.Status == JobItemStatus.ReadWithRequestedQuantity && request.RequiredFieldRead3 != jobItem.RequiredField3) || request.RequiredFieldRead3 < 0)
+        if ((request.Status == JobItemStatus.ReadWithRequestedQuantity && jobItem.RequiredField3 is not null && !request.RequiredFieldRead3.IsApproximatelyEqual((double)jobItem.RequiredField3)) || request.RequiredFieldRead3 < 0)
             return Result.Failure<Result>(JobErrors.JobItemBadQuanity);
 
-        var lastAssignedJobInProgress = await dbContext.JobsInProgress
-            .AsNoTracking()
-            .Where(x => x.CompletionType == (byte)JobCompletitionType.Initial)
-            .Include(x => x.Job)
-            .OrderByDescending(x => x.Id)
-        .FirstOrDefaultAsync(cancellationToken);
+        var lastAssignedJobInProgress = await dbContext.Jobs
+           .AsNoTracking()
+           .Where(x =>
+               x.AssignedOperatorId == operatorId &&
+               x.CompletionType != (byte)JobCompletitionType.SuccessfullyCompleted &&
+               x.JobsInProgress.Any(jip => jip.CompletionType == (byte)JobCompletitionType.Initial && jip.EndDateTime == null && jip.OperatorTerminalId == operatorTerminalId))
+           .Include(x => x.JobsInProgress)
+           .OrderByDescending(x => x.Id)
+           .Select(x => new
+           {
+               Job = x,
+               JobInProgress = x.JobsInProgress
+                   .Where(jip => jip.CompletionType == (byte)JobCompletitionType.Initial && jip.EndDateTime == null && jip.OperatorTerminalId == operatorTerminalId)
+                   .OrderByDescending(jip => jip.Id)
+               .FirstOrDefault()
+           })
+       .FirstOrDefaultAsync(cancellationToken);
 
-        if (lastAssignedJobInProgress is null)
+        if (lastAssignedJobInProgress is null || lastAssignedJobInProgress.JobInProgress is null)
             return Result.Failure<Result>(JobErrors.JobInProgressNotFound);
 
-        if (lastAssignedJobInProgress.CompletionType != (byte)JobCompletitionType.Initial)
+        if (lastAssignedJobInProgress.JobInProgress.Id != request.JobInProgressId)
+            return Result.Failure<Result>(OperatorTerminalErrors.Forbidden);
+
+        if (lastAssignedJobInProgress.JobInProgress.CompletionType != (byte)JobCompletitionType.Initial)
             return Result.Failure<Result>(JobErrors.JobInProgressAlreadyCompleted);
 
         if (lastAssignedJobInProgress.Job.CompletionType == (byte)JobCompletitionType.SuccessfullyCompleted)
             return Result.Failure<Result>(JobErrors.AlreadyCompleted);
 
-        if (lastAssignedJobInProgress.OperatorTerminalId != operatorTerminalId || lastAssignedJobInProgress.Job.AssignedOperatorId != operatorId)
-            return Result.Failure<Result>(OperatorTerminalErrors.Forbidden);
-
-        jobItem.JobInProgressId = lastAssignedJobInProgress.Id;
+        jobItem.JobInProgressId = lastAssignedJobInProgress.JobInProgress.Id;
         jobItem.ReadedField3 = request.RequiredFieldRead3;
         jobItem.ItemStatus = (byte)request.Status;
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return Result.Success();
+    }
+
+    private static bool IsJobItemEligibleForCompletion(JobItem jobItem, CompleteJobItemCommand request)
+    {
+        return
+            request.RequiredFieldRead1 == jobItem.RequiredField1 &&
+            request.RequiredFieldRead2 == jobItem.RequiredField2 &&
+            jobItem.RequiredField3 is not null && request.RequiredFieldRead3.IsApproximatelyEqual((double)jobItem.RequiredField3);
     }
 }

@@ -25,17 +25,35 @@ internal sealed class InsertJobItemToInventoryCommandHandler(
             .OrderByDescending(x => x.Id)
         .FirstOrDefaultAsync(cancellationToken);
 
-        if (jobInProgress is null)
+        var lastAssignedJobInProgress = await dbContext.Jobs
+           .AsNoTracking()
+           .Where(x =>
+               x.AssignedOperatorId == operatorId &&
+               x.CompletionType != (byte)JobCompletitionType.SuccessfullyCompleted &&
+               x.JobsInProgress.Any(jip => jip.CompletionType == (byte)JobCompletitionType.Initial && jip.EndDateTime == null && jip.OperatorTerminalId == operatorTerminalId))
+           .Include(x => x.JobsInProgress)
+           .OrderByDescending(x => x.Id)
+           .Select(x => new
+           {
+               Job = x,
+               JobInProgress = x.JobsInProgress
+                   .Where(jip => jip.CompletionType == (byte)JobCompletitionType.Initial && jip.EndDateTime == null && jip.OperatorTerminalId == operatorTerminalId)
+                   .OrderByDescending(jip => jip.Id)
+               .FirstOrDefault()
+           })
+       .FirstOrDefaultAsync(cancellationToken);
+
+        if (jobInProgress is null || lastAssignedJobInProgress is null || lastAssignedJobInProgress.JobInProgress is null)
             return Result.Failure<JobItemResponse>(JobErrors.JobInProgressNotFound);
+
+        if (lastAssignedJobInProgress.JobInProgress.Id != request.JobInProgressId)
+            return Result.Failure<JobItemResponse>(OperatorTerminalErrors.Forbidden);
 
         if (jobInProgress.CompletionType == (byte)JobCompletitionType.SuccessfullyCompleted)
             return Result.Failure<JobItemResponse>(JobErrors.JobInProgressAlreadyCompleted);
 
         if (jobInProgress.Job.CompletionType == (byte)JobCompletitionType.SuccessfullyCompleted)
             return Result.Failure<JobItemResponse>(JobErrors.AlreadyCompleted);
-
-        if (jobInProgress.OperatorTerminalId != operatorTerminalId || jobInProgress.Job.AssignedOperatorId != operatorId)
-            return Result.Failure<JobItemResponse>(OperatorTerminalErrors.Forbidden);
 
         var jobItemDb = jobInProgress.Job.JobItems.FirstOrDefault(x => x.RequiredField1 == request.ReadedField1 && x.RequiredField2 == request.ReadedField2);
         if (jobItemDb is not null)
@@ -64,11 +82,8 @@ internal sealed class InsertJobItemToInventoryCommandHandler(
         }
         else
         {
-            // long currentJobItemMaxId = await dbContext.JobItems.MaxAsync(x => x.Id, cancellationToken);
-
             var newJobItem = new JobItem
             {
-                // Id = currentJobItemMaxId + 1,
                 JobId = jobInProgress.JobId,
                 ItemDescription = string.Empty,
                 RequiredField1 = request.ReadedField1,

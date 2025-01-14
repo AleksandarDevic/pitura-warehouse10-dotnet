@@ -26,6 +26,8 @@ internal sealed class LoginCommandHandler(
         var operatorId = operatorDb.Id;
         var terminalId = terminal.Id;
 
+        var dateTimeNow = dateTimeProvider.Now;
+
         var terminalAlreadyInUse = await dbContext.OperatorTerminalSessions.AnyAsync(x => x.TerminalId == terminal.Id && x.LogoutDateTime == null, cancellationToken);
         if (terminalAlreadyInUse)
             return Result.Failure<LoginCommandResult>(OperatorTerminalErrors.TerminalAlreadyInUse);
@@ -39,7 +41,7 @@ internal sealed class LoginCommandHandler(
             Id = currentOperatorTerminalMaxId + 1,
             OperatorId = operatorId,
             TerminalId = terminalId,
-            LoginDateTime = dateTimeProvider.Now
+            LoginDateTime = dateTimeNow
         };
 
         await dbContext.OperatorTerminalSessions.AddAsync(newOperatorTerminal, cancellationToken);
@@ -64,8 +66,6 @@ internal sealed class LoginCommandHandler(
 
         var assignedJob = lastAssignedJobInProgress?.Job;
         var assignedJobInProgress = lastAssignedJobInProgress?.JobInProgress;
-
-        var dateTimeNow = dateTimeProvider.Now;
 
         if (assignedJob is not null && assignedJobInProgress is not null)
         {

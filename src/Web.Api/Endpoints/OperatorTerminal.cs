@@ -4,7 +4,6 @@ using Application.Logout;
 using Application.OperatorTerminals.GetActiveTerminals;
 using Application.OperatorTerminals.GetOperatorTerminalDetails;
 using Application.TokenRefresh;
-using Domain.Entities;
 using Domain.Models;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
