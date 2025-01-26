@@ -81,29 +81,29 @@ public class OperatorTerminal : IEndpoint
         app.MapPost("operator-terminal/token-refresh", async (
             HttpContext httpContext,
             ISender sender,
-            [FromBody] string? refreshToken,
+            // [FromBody] string? refreshToken,
             CancellationToken cancellationToken) =>
         {
             return Results.Unauthorized();
-            var refreshTokenFromCookie = httpContext.Request.Cookies[HttpContextItemKeys.RefreshTokenCookie];
-            if (refreshTokenFromCookie is not null)
-                refreshToken = refreshTokenFromCookie;
+            // var refreshTokenFromCookie = httpContext.Request.Cookies[HttpContextItemKeys.RefreshTokenCookie];
+            // if (refreshTokenFromCookie is not null)
+            //     refreshToken = refreshTokenFromCookie;
 
-            if (refreshToken is null)
-                return Results.Unauthorized();
+            // if (refreshToken is null)
+            //     return Results.Unauthorized();
 
-            int operatorTerminalId = int.Parse(refreshToken);
+            // int operatorTerminalId = int.Parse(refreshToken);
 
-            var command = new TokenRefreshCommand(operatorTerminalId);
-            var result = await sender.Send(command, cancellationToken);
+            // var command = new TokenRefreshCommand(operatorTerminalId);
+            // var result = await sender.Send(command, cancellationToken);
 
-            if (result.IsSuccess)
-            {
-                DeleteRefreshTokenCookie(httpContext);
-                SetRefreshTokenCookie(httpContext, result.Value.RefreshToken);
-            }
+            // if (result.IsSuccess)
+            // {
+            //     DeleteRefreshTokenCookie(httpContext);
+            //     SetRefreshTokenCookie(httpContext, result.Value.RefreshToken);
+            // }
 
-            return result.Match(Results.Ok, CustomResults.Problem);
+            // return result.Match(Results.Ok, CustomResults.Problem);
         })
         .WithTags(Tags.OperatorTerminal);
 
