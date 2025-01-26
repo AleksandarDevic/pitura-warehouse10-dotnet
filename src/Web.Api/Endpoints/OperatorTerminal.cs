@@ -85,13 +85,12 @@ public class OperatorTerminal : IEndpoint
             CancellationToken cancellationToken) =>
         {
             var refreshTokenFromCookie = httpContext.Request.Cookies[HttpContextItemKeys.RefreshTokenCookie];
+            if (refreshTokenFromCookie is null)
+                refreshToken = refreshTokenFromCookie;
 
             if (refreshToken is null)
-            {
-                if (refreshTokenFromCookie is null)
-                    return Results.Unauthorized();
-                refreshToken = refreshTokenFromCookie;
-            }
+                return Results.Unauthorized();
+
             int operatorTerminalId = int.Parse(refreshToken);
 
             var command = new TokenRefreshCommand(operatorTerminalId);
