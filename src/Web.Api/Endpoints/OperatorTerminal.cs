@@ -81,7 +81,7 @@ public class OperatorTerminal : IEndpoint
         app.MapPost("operator-terminal/token-refresh", async (
             HttpContext httpContext,
             ISender sender,
-            // [FromBody] string? refreshToken,
+            [FromBody] string? refreshToken,
             CancellationToken cancellationToken) =>
         {
             return Results.Unauthorized();
