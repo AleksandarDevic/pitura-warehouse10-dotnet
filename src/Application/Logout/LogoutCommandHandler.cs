@@ -36,7 +36,8 @@ internal sealed class LogoutCommandHandler(IApplicationDbContext dbContext, IDat
             })
         .FirstOrDefaultAsync(cancellationToken);
 
-        if (lastAssignedJobInProgress is not null && lastAssignedJobInProgress.Job is not null && lastAssignedJobInProgress.JobInProgress is not null)
+
+        if (request.CheckLastAssignedJobInProgress && lastAssignedJobInProgress is not null && lastAssignedJobInProgress.Job is not null && lastAssignedJobInProgress.JobInProgress is not null)
             return Result.Failure<Result>(JobErrors.NotCompleted(lastAssignedJobInProgress.Job.Description ?? $"{lastAssignedJobInProgress.Job.Id}"));
 
         operatorTerminal.LogoutDateTime = dateTimeProvider.Now;

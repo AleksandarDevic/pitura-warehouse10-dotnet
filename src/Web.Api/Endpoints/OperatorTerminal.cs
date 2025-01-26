@@ -68,7 +68,28 @@ public class OperatorTerminal : IEndpoint
 
             int operatorTerminalId = int.Parse(refreshToken);
 
-            var command = new LogoutCommand(operatorTerminalId);
+            var command = new LogoutCommand(operatorTerminalId, true);
+            Result result = await sender.Send(command, cancellationToken);
+
+            if (result.IsSuccess)
+                DeleteRefreshTokenCookie(httpContext);
+
+            return result.Match(Results.NoContent, CustomResults.Problem);
+        })
+        .WithTags(Tags.OperatorTerminal);
+
+        app.MapPost("operator-terminal/logout-expired-token", async (
+            HttpContext httpContext,
+            ISender sender,
+            CancellationToken cancellationToken) =>
+        {
+            var refreshToken = httpContext.Request.Cookies[HttpContextItemKeys.RefreshTokenCookie];
+            if (refreshToken is null)
+                return Results.Unauthorized();
+
+            int operatorTerminalId = int.Parse(refreshToken);
+
+            var command = new LogoutCommand(operatorTerminalId, false);
             Result result = await sender.Send(command, cancellationToken);
 
             if (result.IsSuccess)
