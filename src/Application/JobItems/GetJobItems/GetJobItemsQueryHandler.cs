@@ -52,18 +52,13 @@ internal sealed class GetJobItemsQueryHandler(IApplicationDbContext dbContext, I
         });
 
         var result = await jobItemResponsesQuery.ToPagedListAsync(request.PageNumber, request.PageSize, cancellationToken);
-
+        result.Items = result.Items.OrderBy(x => x.ItemStatus).ToList();
         return result;
     }
 
     private IQueryable<JobItem> ApplySorting(IQueryable<JobItem> query, GetJobItemsQuery request)
     {
-        // Step 1: Sort by ItemStatus (can be translated to SQL)
-        var orderedQuery = query
-            .OrderBy(jobItem => jobItem.ItemStatus == 1 ? 1 : 0);
-
-        // Step 2: Additional sorting for RequiredField1 (client-side evaluation)
-        var finalQuery = orderedQuery
+        var finalQuery = query
             .OrderBy(jobItem =>
                 jobItem.RequiredField1 == null ? 7 :
                 jobItem.RequiredField1.StartsWith("6D") ? 1 :

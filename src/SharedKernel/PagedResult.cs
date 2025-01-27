@@ -12,7 +12,7 @@ public record PagedList<T>
 
     public PagedList() { }
 
-    public List<T> Items { get; } = [];
+    public List<T> Items { get; set; } = [];
 
     public int PageNumber { get; }
     public int PageSize { get; }
