@@ -58,36 +58,21 @@ internal sealed class GetJobItemsQueryHandler(IApplicationDbContext dbContext, I
 
     private IQueryable<JobItem> ApplySorting(IQueryable<JobItem> query, GetJobItemsQuery request)
     {
-        // Custom sorting for ItemStatus (Items with ItemStatus == 1 go to the end)
-        Expression<Func<JobItem, int>> statusOrderSelector = jobItem =>
-            jobItem.ItemStatus == 1 ? 1 : 0;
+        // Step 1: Sort by ItemStatus (can be translated to SQL)
+        var orderedQuery = query
+            .OrderBy(jobItem => jobItem.ItemStatus == 1 ? 1 : 0);
 
-        // Custom sorting logic for RequiredField1
-        Expression<Func<JobItem, int>> customOrderSelector = jobItem =>
-            jobItem.RequiredField1 == null ? 5 : // Assign lowest priority to null values
-            jobItem.RequiredField1.StartsWith("6D") ? 1 :
-            jobItem.RequiredField1.StartsWith("6S") ? 2 :
-            jobItem.RequiredField1.StartsWith("6L") ? 3 : 4;
+        // Step 2: Additional sorting for RequiredField1 (client-side evaluation)
+        var finalQuery = orderedQuery
+            .OrderBy(jobItem =>
+                jobItem.RequiredField1 == null ? 7 :
+                jobItem.RequiredField1.StartsWith("6D") ? 1 :
+                jobItem.RequiredField1.StartsWith("6Y") ? 2 :
+                jobItem.RequiredField1.StartsWith("6S") ? 3 :
+                jobItem.RequiredField1.StartsWith("6X") ? 4 :
+                jobItem.RequiredField1.StartsWith("6L") ? 5 : 6)
+            .ThenBy(jobItem => jobItem.RequiredField1); // Sort full value alphabetically
 
-        // Apply primary sorting (ItemStatus and custom order)
-        var orderedQuery = request.IsDescending
-            ? query.OrderBy(statusOrderSelector).ThenByDescending(customOrderSelector) :
-            query.OrderBy(statusOrderSelector).ThenBy(customOrderSelector);
-
-        return orderedQuery;
-
-        // // Standard sorting logic for other fields
-        // Expression<Func<JobItem, object?>> keySelector = request.OrderBy switch
-        // {
-        //     "ItemDescription" => jobItem => jobItem.ItemDescription,
-        //     "requiredField1" => jobItem => jobItem.RequiredField1,
-        //     "requiredField2" => jobItem => jobItem.RequiredField2,
-        //     _ => jobItem => jobItem.ItemDescription
-        // };
-
-        // // Apply secondary sorting (dynamic field and direction)
-        // return request.IsDescending
-        //     ? orderedQuery.ThenByDescending(keySelector)
-        //     : orderedQuery.ThenBy(keySelector);
+        return finalQuery.AsQueryable();
     }
 }
