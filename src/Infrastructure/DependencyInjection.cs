@@ -55,6 +55,8 @@ public static class DependencyInjection
 
     private static IServiceCollection AddAuth(this IServiceCollection services, IConfiguration configuration)
     {
+        services.Configure<AdminCredentialsOptions>(configuration.GetSection(AdminCredentialsOptions.SectionName));
+
         // Jwt
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.AddSingleton<IJwtProvider, JwtProvider>();
@@ -96,8 +98,6 @@ public static class DependencyInjection
         services.AddQuartzHostedService(options => options.WaitForJobsToComplete = true);
 
         services.ConfigureOptions<OperatorTerminalLogoutJobSetup>();
-
-        services.Configure<AdminCredentialsOptions>(configuration.GetSection(AdminCredentialsOptions.SectionName));
 
         return services;
     }
