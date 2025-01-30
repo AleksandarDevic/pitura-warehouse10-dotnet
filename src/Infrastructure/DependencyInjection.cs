@@ -26,8 +26,8 @@ public static class DependencyInjection
            .AddServices()
            .AddDatabase(configuration)
            .AddAuth(configuration)
-           .AddHealthChecks(configuration)
-           .AddBackgroundJobs(configuration);
+           .AddHealthChecks(configuration);
+        //    .AddBackgroundJobs(configuration);
 
     private static IServiceCollection AddServices(this IServiceCollection services)
     {
