@@ -85,7 +85,7 @@ public class OperatorTerminal : IEndpoint
         {
             var refreshToken = httpContext.Request.Cookies[HttpContextItemKeys.RefreshTokenCookie];
             if (refreshToken is null)
-                return Results.Unauthorized();
+                return Results.NoContent();
 
             int operatorTerminalId = int.Parse(refreshToken);
 
@@ -105,7 +105,7 @@ public class OperatorTerminal : IEndpoint
             [FromBody] string? refreshToken,
             CancellationToken cancellationToken) =>
         {
-            return Results.Unauthorized();
+                return Results.Unauthorized();
             // var refreshTokenFromCookie = httpContext.Request.Cookies[HttpContextItemKeys.RefreshTokenCookie];
             // if (refreshTokenFromCookie is not null)
             //     refreshToken = refreshTokenFromCookie;
