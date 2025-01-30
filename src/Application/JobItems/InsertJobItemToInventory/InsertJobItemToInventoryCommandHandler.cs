@@ -55,6 +55,12 @@ internal sealed class InsertJobItemToInventoryCommandHandler(
         if (jobInProgress.Job.CompletionType == (byte)JobCompletitionType.SuccessfullyCompleted)
             return Result.Failure<JobItemResponse>(JobErrors.AlreadyCompleted);
 
+        if (request.ReadedField1.Trim().Length != 5)
+            return Result.Failure<JobItemResponse>(JobErrors.JobItemRequestedAndReadedValueNotMatch);
+
+        if (!new[] { 13, 17, 21 }.Contains(request.ReadedField2.Trim().Length))
+            return Result.Failure<JobItemResponse>(JobErrors.JobItemRequestedAndReadedValueNotMatch);
+
         var jobItemDb = jobInProgress.Job.JobItems.FirstOrDefault(x => x.RequiredField1 == request.ReadedField1 && x.RequiredField2 == request.ReadedField2);
         if (jobItemDb is not null)
         {
