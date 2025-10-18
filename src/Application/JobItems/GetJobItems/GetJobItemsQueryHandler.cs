@@ -1,8 +1,6 @@
-using System.Linq.Expressions;
 using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
 using Application.Abstractions.Messaging;
-using Application.Extensions;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Models;
@@ -61,15 +59,27 @@ internal sealed class GetJobItemsQueryHandler(IApplicationDbContext dbContext, I
         if (request.AnchorItemId.HasValue)
         {
             var anchorItemId = request.AnchorItemId.Value;
-            var idx = unreadJobItems.FindIndex(x => x.Id == anchorItemId);
+            var idx = jobItemsAll.FindIndex(x => x.Id == anchorItemId);
             if (idx >= 0)
             {
-                var rotatedUnread = unreadJobItems.Skip(idx).Concat(unreadJobItems.Take(idx)).ToList();
+                var l1 = jobItemsAll.Skip(0).Take(idx + 1).ToList();
+                var l2 = jobItemsAll.Skip(idx + 1).Take(jobItemsAll.Count - (idx + 1)).ToList();
+
+                var l1Unread = l1.Where(x => x.ItemStatus == JobItemStatus.Unread).ToList();
+                var l1Read = l1.Where(x => x.ItemStatus != JobItemStatus.Unread).ToList();
+
+                var l2Unread = l2.Where(x => x.ItemStatus == JobItemStatus.Unread).ToList();
+                var l2Read = l2.Where(x => x.ItemStatus != JobItemStatus.Unread).ToList();
+
+                var rotatedUnread = l2Unread.Concat(l1Unread).ToList();
+                var rotatedRead = l1Read.Concat(l2Read).ToList();
+
                 unreadJobItems = rotatedUnread;
+                readJobItems = rotatedRead;
             }
         }
 
-        jobItemsAll = unreadJobItems.Concat(readJobItems).ToList();
+        jobItemsAll = [.. unreadJobItems, .. readJobItems];
 
         var jobItemsForResponse = jobItemsAll
             .Skip((request.PageNumber - 1) * request.PageSize)
