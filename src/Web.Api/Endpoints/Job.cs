@@ -9,7 +9,6 @@ using Application.Jobs.GetAvailableJobs;
 using Application.Jobs.IsJobInProgressClosable;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using SharedKernel;
 using Web.Api.Extensions;
 using Web.Api.Infrastructure;
 
@@ -87,12 +86,13 @@ public class Job : IEndpoint
         app.MapGet("job/{jobId}/items", async (
             ISender sender,
             [FromRoute] long jobId,
-            [AsParameters] BasePagedRequest request,
+            [AsParameters] GetJobItemsRequest request,
             CancellationToken cancellationToken) =>
         {
             var query = new GetJobItemsQuery
             {
                 JobId = jobId,
+                AnchorItemId = request.AnchorItemId,
                 SearchTerm = request.SearchTerm,
                 PageNumber = request.PageNumber,
                 PageSize = request.PageSize,

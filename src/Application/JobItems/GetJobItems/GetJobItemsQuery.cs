@@ -7,4 +7,5 @@ namespace Application.JobItems.GetJobItems;
 public record GetJobItemsQuery : BasePagedRequest, IQuery<PagedList<JobItemResponse>>
 {
     public long JobId { get; init; }
+    public long? AnchorItemId { get; init; }
 };

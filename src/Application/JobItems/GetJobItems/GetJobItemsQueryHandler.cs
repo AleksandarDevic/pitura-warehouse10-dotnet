@@ -36,7 +36,7 @@ internal sealed class GetJobItemsQueryHandler(IApplicationDbContext dbContext, I
                 EF.Functions.Like(x.ItemDescription.ToLower(), $"%{lowerSearchTerm}%"));
         }
 
-        query = ApplySorting(query, request);
+        query = ApplySorting(query);
 
         var jobItemResponsesQuery = query.Select(x => new JobItemResponse
         {
@@ -51,16 +51,42 @@ internal sealed class GetJobItemsQueryHandler(IApplicationDbContext dbContext, I
             ItemStatus = x.ItemStatus.HasValue ? (JobItemStatus)x.ItemStatus.Value : JobItemStatus.Unread
         });
 
-        var result = await jobItemResponsesQuery.ToPagedListAsync(request.PageNumber, request.PageSize, cancellationToken);
-        result.Items = result.Items.OrderBy(x => x.ItemStatus).ToList();
+        // var result = await jobItemResponsesQuery.ToPagedListAsync(request.PageNumber, request.PageSize, cancellationToken);
+        // result.Items = result.Items.OrderBy(x => x.ItemStatus).ToList();
+        var jobItemsAll = await jobItemResponsesQuery.ToListAsync(cancellationToken);
+
+        var unreadJobItems = jobItemsAll.Where(x => x.ItemStatus == JobItemStatus.Unread).ToList();
+        var readJobItems = jobItemsAll.Where(x => x.ItemStatus != JobItemStatus.Unread).ToList();
+
+        if (request.AnchorItemId.HasValue)
+        {
+            var anchorItemId = request.AnchorItemId.Value;
+            var idx = unreadJobItems.FindIndex(x => x.Id == anchorItemId);
+            if (idx >= 0)
+            {
+                var rotatedUnread = unreadJobItems.Skip(idx).Concat(unreadJobItems.Take(idx)).ToList();
+                unreadJobItems = rotatedUnread;
+            }
+        }
+
+        jobItemsAll = unreadJobItems.Concat(readJobItems).ToList();
+
+        var jobItemsForResponse = jobItemsAll
+            .Skip((request.PageNumber - 1) * request.PageSize)
+            .Take(request.PageSize)
+        .ToList();
+
+        var result = new PagedList<JobItemResponse>(jobItemsForResponse, request.PageNumber, request.PageSize, jobItemsAll.Count);
+
         return result;
     }
 
-    private IQueryable<JobItem> ApplySorting(IQueryable<JobItem> query, GetJobItemsQuery request)
+    private IQueryable<JobItem> ApplySorting(IQueryable<JobItem> query)
     {
         var finalQuery = query
             .OrderBy(jobItem =>
-                jobItem.RequiredField1 == null ? 7 :
+                jobItem.RequiredField1 == null ? 8 :
+                jobItem.RequiredField1.Contains("MIX") ? 7 :
                 jobItem.RequiredField1.StartsWith("6D") ? 1 :
                 jobItem.RequiredField1.StartsWith("6Y") ? 2 :
                 jobItem.RequiredField1.StartsWith("6S") ? 3 :

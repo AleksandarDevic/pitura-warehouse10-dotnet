@@ -51,4 +51,8 @@ public static class JobErrors
     public static readonly Error JobItemNotFound = Error.NotFound(
         "JobItem.NotFound",
         "Stavka posla nije pronađena.");
+
+    public static readonly Error ProductNotFound = Error.NotFound(
+        "Product.NotFound",
+        "Proizvod nije pronađen.");
 }
