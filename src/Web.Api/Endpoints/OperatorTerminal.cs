@@ -59,10 +59,13 @@ public class OperatorTerminal : IEndpoint
 
         app.MapPost("operator-terminal/logout", async (
             HttpContext httpContext,
+            [FromBody] RefreshTokenRequest? refreshTokenRequest,
             ISender sender,
             CancellationToken cancellationToken) =>
         {
             var refreshToken = httpContext.Request.Cookies[HttpContextItemKeys.RefreshTokenCookie];
+            refreshToken ??= refreshTokenRequest?.RefreshToken;
+
             if (refreshToken is null)
                 return Results.Unauthorized();
 
