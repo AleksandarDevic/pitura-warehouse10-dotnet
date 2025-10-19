@@ -37,6 +37,7 @@ internal sealed class GetProductByBarcodeQueryHandler(IApplicationDbContext dbCo
                 ProductDescription = productStock.Name.Trim() ?? string.Empty,
                 WhmCode = productStock.WhmCode ?? string.Empty,
                 ProductCode = productCode,
+                ProductLotNumber = productStock.ProductCodeLot[^10..],
                 ProductLotNumbers = [],
             };
         }
@@ -44,6 +45,7 @@ internal sealed class GetProductByBarcodeQueryHandler(IApplicationDbContext dbCo
         var product = jobItems[0];
 
         productCode = productCode[..^10]; // remove last 10 characters = lot number
+        var productLotNumber = product.RequiredField2![^10..];
 
         var jobItemsGroupedByLotNumber = jobItems
             .GroupBy(x => x.RequiredField2![^10..]) // get last 10 characters = lot number
@@ -59,6 +61,7 @@ internal sealed class GetProductByBarcodeQueryHandler(IApplicationDbContext dbCo
             ProductDescription = product.ItemDescription ?? string.Empty,
             WhmCode = product.RequiredField1 ?? string.Empty,
             ProductCode = productCode,
+            ProductLotNumber = productLotNumber,
             ProductLotNumbers = [.. jobItemsGroupedByLotNumber.Select(l => l.LotNumber)],
         };
 

@@ -6,6 +6,7 @@ public record ProductResponse
     public string ProductName => GetProductName(ProductDescription);
     public string WhmCode { get; init; } = null!;
     public string ProductCode { get; init; } = null!;
+    public string ProductLotNumber { get; init; } = null!;
     public List<string> ProductLotNumbers { get; init; } = [];
 
     private static string GetProductName(string itemDescription)
