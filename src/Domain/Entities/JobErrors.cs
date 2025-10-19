@@ -55,4 +55,8 @@ public static class JobErrors
     public static readonly Error ProductNotFound = Error.NotFound(
         "Product.NotFound",
         "Proizvod nije pronađen.");
+
+    public static readonly Error ProductInvalidBarcodeFormat = Error.NotFound(
+        "Product.InvalidBarcodeFormat",
+        "Barkod nije u dobrom formatu.");
 }

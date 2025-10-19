@@ -10,6 +10,7 @@ public interface IApplicationDbContext
     DbSet<Job> Jobs { get; }
     DbSet<JobInProgress> JobsInProgress { get; }
     DbSet<JobItem> JobItems { get; }
+    DbSet<ProductStock> ProductStocks { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

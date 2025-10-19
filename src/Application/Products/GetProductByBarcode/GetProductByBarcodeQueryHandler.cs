@@ -12,27 +12,40 @@ internal sealed class GetProductByBarcodeQueryHandler(IApplicationDbContext dbCo
 {
     public async Task<Result<ProductResponse>> Handle(GetProductByBarcodeQuery request, CancellationToken cancellationToken)
     {
+        if (request.Barcode.Length != 17 && request.Barcode.Length != 21)
+            return Result.Failure<ProductResponse>(JobErrors.ProductInvalidBarcodeFormat);
+
+        var productCode = request.Barcode[..^10]; // remove last 10 characters = lot number
+
         var jobItems = await dbContext.JobItems.Where(x =>
             x.RequiredField2 != null &&
-            x.RequiredField2 == request.Barcode &&
+            x.RequiredField2.StartsWith(productCode) &&
             (x.RequiredField2.Length == 17 || x.RequiredField2.Length == 21))
         .ToListAsync(cancellationToken);
 
-        var productCode = jobItems.GroupBy(x => x.RequiredField2).Select(g => g.Key).FirstOrDefault();
-        if (productCode == null)
-            return Result.Failure<ProductResponse>(JobErrors.ProductNotFound);
+        if (jobItems.Count == 0)
+        {
+            var productStock = await dbContext.ProductStocks
+                .Where(x => x.ProductCodeLot.StartsWith(productCode))
+            .FirstOrDefaultAsync(cancellationToken);
+
+            if (productStock is null)
+                return Result.Failure<ProductResponse>(JobErrors.ProductNotFound);
+
+            return new ProductResponse
+            {
+                ProductDescription = productStock.Name.Trim() ?? string.Empty,
+                WhmCode = productStock.WhmCode ?? string.Empty,
+                ProductCode = productCode,
+                ProductLotNumbers = [],
+            };
+        }
 
         var product = jobItems[0];
 
         productCode = productCode[..^10]; // remove last 10 characters = lot number
 
-        var allJobItemsByProductCode = await dbContext.JobItems.Where(x =>
-            x.RequiredField2 != null &&
-            (x.RequiredField2.Length == 17 || x.RequiredField2.Length == 21) &&
-            x.RequiredField2.StartsWith(productCode))
-        .ToListAsync(cancellationToken);
-
-        var jobItemsGroupedByLotNumber = allJobItemsByProductCode
+        var jobItemsGroupedByLotNumber = jobItems
             .GroupBy(x => x.RequiredField2![^10..]) // get last 10 characters = lot number
             .Select(g => new
             {
@@ -44,6 +57,7 @@ internal sealed class GetProductByBarcodeQueryHandler(IApplicationDbContext dbCo
         var result = new ProductResponse
         {
             ProductDescription = product.ItemDescription ?? string.Empty,
+            WhmCode = product.RequiredField1 ?? string.Empty,
             ProductCode = productCode,
             ProductLotNumbers = [.. jobItemsGroupedByLotNumber.Select(l => l.LotNumber)],
         };

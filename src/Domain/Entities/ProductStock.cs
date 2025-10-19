@@ -6,13 +6,13 @@ public class ProductStock
     public required string WhmCode { get; set; }
     public required string Name { get; set; }
     public required string UnitOfMeasure { get; set; }
-    public int Weight { get; set; }
-    public int PackageSize { get; set; }
+    public double Weight { get; set; }
+    public double PackageSize { get; set; }
     public DateTime? ExpirationDate { get; set; }
 
-    public decimal Quantity { get; set; }
+    public double Quantity { get; set; }
 
-    public decimal? Price { get; set; }
+    public double Price { get; set; }
 
     public string? Barcode { get; set; }
 

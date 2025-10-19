@@ -4,6 +4,7 @@ public record ProductResponse
 {
     public string ProductDescription { get; init; } = null!;
     public string ProductName => GetProductName(ProductDescription);
+    public string WhmCode { get; init; } = null!;
     public string ProductCode { get; init; } = null!;
     public List<string> ProductLotNumbers { get; init; } = [];
 
