@@ -44,7 +44,6 @@ internal sealed class GetProductByBarcodeQueryHandler(IApplicationDbContext dbCo
 
         var product = jobItems[0];
 
-        productCode = productCode[..^10]; // remove last 10 characters = lot number
         var productLotNumber = product.RequiredField2![^10..];
 
         var jobItemsGroupedByLotNumber = jobItems
